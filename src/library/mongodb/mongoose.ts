@@ -3,27 +3,25 @@ import mongoose from 'mongoose';
 const MONGODB_URI = process.env.MONGODB_URI;
 
 const connect = async () => {
-  // 1. Check if the connection state is already "open" (1)
   if (mongoose.connection.readyState === 1) {
-    console.log('MongoDB already connected');
+    console.log('✅ MongoDB already connected');
     return;
   }
 
-  // 2. TypeScript check: Ensure the URI actually exists
   if (!MONGODB_URI) {
+    console.error('❌ MONGODB_URI not found in environment variables');
     throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
   }
 
   try {
-    // 3. Connect (No need for useNewUrlParser/useUnifiedTopology in Mongoose 7+)
     await mongoose.connect(MONGODB_URI, {
-      dbName: 'fm-website', // Change this to your actual DB name
+      dbName: 'fm-website',
       bufferCommands: true,
     });
 
-    console.log('MongoDB connected');
+    console.log('✅ MongoDB connected successfully to database: fm-website');
   } catch (error) {
-    console.log('MongoDB connection error:', error);
+    console.error('❌ MongoDB connection error:', error);
     throw new Error('Error connecting to database');
   }
 };
