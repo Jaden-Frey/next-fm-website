@@ -1,14 +1,15 @@
 import User from "../models/user.model";
-import connect from "../mongodb/mongoose"; 
+import {connect} from "../mongodb/mongoose"; 
 
 export const createOrUpdateUser = async (
-  id: string,
-  first_name: string,
-  last_name: string,
-  image_url: string,
-  email_addresses: { email_address: string }[],
-  username: string | undefined
+  id,
+  first_name,
+  last_name,
+  image_url,
+  email_addresses,
+  username
 ) => {
+
   try {
     await connect(); 
 
@@ -24,17 +25,18 @@ export const createOrUpdateUser = async (
           username: username || email_addresses[0].email_address.split("@")[0],
         },
       },
-      { upsert: true, new: true }
+      { new: true, upsert: true }
     );
 
     return user;
+
   } catch (error) {
     console.error("Error creating or updating user:", error);
     throw error;
   }
 };
 
-export const deleteUser = async (id: string) => {
+export const deleteUser = async (id) => {
     try {
         await connect();
         await User.findOneAndDelete({ clerkId: id });
