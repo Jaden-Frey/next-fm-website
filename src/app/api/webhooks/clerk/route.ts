@@ -1,4 +1,3 @@
-
 import type { WebhookEvent } from "@clerk/nextjs/server"; // type-only import
 import { NextResponse } from "next/server";
 import { Webhook } from "svix";
@@ -60,15 +59,17 @@ export async function POST(req: Request) {
   if (evt.type === "user.created") {
     const { id: clerkId, email_addresses, image_url, first_name, last_name, username } = evt.data as any;
 
+    const generatedUsername = username || (email_addresses[0]?.email_address.split('@')[0] + '_' + clerkId.slice(-6));
+
     const user = {
       clerkId,
       email: Array.isArray(email_addresses) && email_addresses[0]?.email_address
         ? email_addresses[0].email_address
         : undefined,
-      username: username ?? undefined,
-      firstName: first_name ?? undefined,
-      lastName: last_name ?? undefined,
-      photo: image_url ?? undefined,
+      username: generatedUsername, 
+      firstName: first_name || '', 
+      lastName: last_name || '',   
+      photo: image_url || 'https://via.placeholder.com/150', 
     };
 
     try {
