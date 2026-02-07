@@ -12,40 +12,43 @@ export const createOrUpdateUser = async (
   try {
     await connect();
 
-    console.log("Creating/updating user with ID:", id);
+    console.log("Creating/updating user:", id);
+
+    // SAFEGUARDS: Handle missing data gracefully
+    const primaryEmail = email_addresses && email_addresses.length > 0 
+      ? email_addresses[0].email_address 
+      : "";
+
+    // If username is null (common in Clerk), fallback to part of the email
+    const safeUsername = username || (primaryEmail ? primaryEmail.split("@")[0] : "user");
 
     const user = await User.findOneAndUpdate(
       { clerkId: id },
       {
         $set: {
-          clerkId: id,
-          firstName: first_name,
-          lastName: last_name,
+          firstName: first_name || "Unknown",
+          lastName: last_name || "Unknown",
           avatar: image_url,
-          email: email_addresses[0].email_address,
-          username: username || email_addresses[0].email_address.split("@")[0],
+          email: primaryEmail,
+          username: safeUsername,
         },
       },
-      { new: true, upsert: true }
+      { new: true, upsert: true } // Create if doesn't exist
     );
 
-    console.log("User created/updated successfully:", user);
+    console.log("Database updated successfully");
     return user;
   } catch (error) {
-    console.error("Error creating or updating user:", error);
-    throw error;
+    console.error("Error in createOrUpdateUser:", error);
+    throw error; // This causes the webhook to fail (which is good, so Clerk retries)
   }
 };
 
 export const deleteUser = async (id) => {
   try {
     await connect();
-    
-    console.log("Deleting user with ID:", id);
-    const result = await User.findOneAndDelete({ clerkId: id });
-    console.log("User deleted:", result);
-    
-    return result;
+    await User.findOneAndDelete({ clerkId: id });
+    console.log("User deleted from DB");
   } catch (error) {
     console.error("Error deleting user:", error);
     throw error;
