@@ -17,7 +17,7 @@ const connect = async () => {
   try {
     // 3. Connect (No need for useNewUrlParser/useUnifiedTopology in Mongoose 7+)
     await mongoose.connect(MONGODB_URI, {
-      dbName: 'fm website', // Change this to your actual DB name
+      dbName: 'fm-website', // Change this to your actual DB name
       bufferCommands: true,
     });
 
