@@ -1,7 +1,7 @@
 import type { WebhookEvent } from "@clerk/nextjs/server"; // type-only import
 import { NextResponse } from "next/server";
 import { Webhook } from "svix";
-import { createUser } from "../../../../lib/actions/user.action";
+import { createUser, updateUser, deleteUser } from "../../../../lib/actions/user.action";
 
 export const runtime = "nodejs"; // explicit runtime for webhook libraries that rely on node
 
@@ -80,6 +80,39 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Error creating user" }, { status: 500 });
     }
   }
+
+
+if (evt.type === "user.updated") {
+  const { id: clerkId, email_addresses, image_url, first_name, last_name, username } = evt.data as any;
+  const generatedUsername = username || (email_addresses[0]?.email_address.split('@')[0] + '_' + clerkId.slice(-6));
+  const user = {
+    email: Array.isArray(email_addresses) && email_addresses[0]?.email_address
+      ? email_addresses[0].email_address
+      : undefined,
+    username: generatedUsername,
+    firstName: first_name || '',
+    lastName: last_name || '',
+    photo: image_url || 'https://via.placeholder.com/150',
+  };
+  try {
+    const updatedUser = await updateUser(clerkId, user);
+    return NextResponse.json({ message: "User updated", user: updatedUser }, { status: 200 });
+  } catch (err) {
+    console.error("Error updating user from webhook:", err);
+    return NextResponse.json({ error: "Error updating user" }, { status: 500 });
+  }
+}
+
+if (evt.type === "user.deleted") {
+  const { id: clerkId } = evt.data as any;
+  try {
+    const deletedUser = await deleteUser(clerkId);
+    return NextResponse.json({ message: "User deleted", user: deletedUser }, { status: 200 });
+  } catch (err) {
+    console.error("Error deleting user from webhook:", err);
+    return NextResponse.json({ error: "Error deleting user" }, { status: 500 });
+  }
+}
 
   return NextResponse.json({ message: "OK" }, { status: 200 });
 }
