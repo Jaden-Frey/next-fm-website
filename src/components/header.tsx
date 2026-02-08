@@ -1,25 +1,58 @@
+'use client'; 
 import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
+import Navbar from './navbar'; 
+import Link from 'next/link';
 
-const Header = () => {  
+const Header = () => {
   return (
-    <nav className="flex justify-between p-4 bg-white shadow-sm">
-      <div className="font-bold text-xl">My Store</div>
-      
-      <ul className='flex gap-4 items-center'>
-        <SignedIn>
-          <UserButton />
-        </SignedIn>
+    // Applied Theme Classes: navbar-dark, bg-dark, fixed-top
+    <nav className="navbar navbar-expand-lg navbar-dark bg-dark fixed-top" id="mainNav">
+      <div className="container px-4">
+        {/* Brand */}
+        <Link href="/" className="navbar-brand font-bold text-xl">
+          My Store
+        </Link>
 
-        <SignedOut>
-          <SignInButton mode="modal">
-            <button className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition">
-              Sign In
-            </button>
-          </SignInButton>
-        </SignedOut>
-      </ul>
+        {/* Mobile Toggler (Hamburger Menu) */}
+        <button 
+          className="navbar-toggler" 
+          type="button" 
+          data-bs-toggle="collapse" 
+          data-bs-target="#navbarResponsive" 
+          aria-controls="navbarResponsive" 
+          aria-expanded="false" 
+          aria-label="Toggle navigation"
+        >
+          <span className="navbar-toggler-icon"></span>
+        </button>
+
+        {/* Collapsible Content */}
+        <div className="collapse navbar-collapse" id="navbarResponsive">
+          {/* Your Navigation Links */}
+          <Navbar />
+
+          {/* Clerk Authentication Buttons */}
+          <ul className='navbar-nav ms-lg-4 gap-4 items-center'>
+            <SignedIn>
+              <li className="nav-item">
+                <UserButton />
+              </li>
+            </SignedIn>
+
+            <SignedOut>
+              <li className="nav-item">
+                <SignInButton mode="modal">
+                  <button className="btn btn-primary bg-orange-500 border-0 hover:bg-orange-600 transition">
+                    Sign In
+                  </button>
+                </SignInButton>
+              </li>
+            </SignedOut>
+          </ul>
+        </div>
+      </div>
     </nav>
   );
 }
 
-export default Header; 
+export default Header;

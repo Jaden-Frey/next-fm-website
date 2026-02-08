@@ -1,27 +1,10 @@
 import { type Metadata } from 'next';
-import { ClerkProvider, SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
+import { ClerkProvider } from '@clerk/nextjs';
 import { Geist, Geist_Mono } from 'next/font/google';
-import './globals.css';
-
-const Header = () => {
-  return (
-    <nav className="flex justify-between p-4 bg-white shadow-sm border-b">
-      <div className="font-bold text-xl">Jaden Frey's Fresh Meat</div>
-      <ul className='flex gap-4 items-center'>
-        <SignedIn>
-          <UserButton />
-        </SignedIn>
-        <SignedOut>
-          <SignInButton mode="modal">
-            <button className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition">
-              Sign In
-            </button>
-          </SignInButton>
-        </SignedOut>
-      </ul>
-    </nav>
-  );
-};
+import './globals.css'; 
+import './theme.css'; 
+import Header from '../components/header';
+import Script from 'next/script'; 
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -47,9 +30,10 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          {/* Use the component we defined above */}
-          <Header /> 
+          <Header />
           <main>{children}</main>
+          {/* Bootstrap JS bundle is required for the mobile hamburger menu */}
+          <Script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" />
         </body>
       </html>
     </ClerkProvider>
