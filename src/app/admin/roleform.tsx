@@ -3,9 +3,9 @@
 import { useState } from "react";
 
 interface RoleFormProps {
-  action: (formData: FormData) => Promise<void>;
+  action: (formData: FormData) => Promise<void>; // Ensure this matches your server action signature
   userId: string;
-  roleValue?: string; // Optional, because 'Remove Role' doesn't need a role value
+  roleValue?: string;
   buttonLabel: string;
   confirmLabel?: string;
   cssClass?: string;
@@ -17,22 +17,22 @@ export function ProtectedRoleButton({
   roleValue,
   buttonLabel,
   confirmLabel = "Confirm?",
-  cssClass,
+  cssClass = "btn btn-primary", // Default bootstrap class
 }: RoleFormProps) {
   const [isConfirming, setIsConfirming] = useState(false);
 
   // If we are in "Confirmation Mode", show the danger state
   if (isConfirming) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="d-flex align-items-center gap-2">
         <form action={action}>
           <input type="hidden" value={userId} name="id" />
           {roleValue && <input type="hidden" value={roleValue} name="role" />}
           
           <button
             type="submit"
-            className="px-2 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-            onClick={() => setIsConfirming(false)} // Reset after submit (optional)
+            className="btn btn-danger btn-sm"
+            onClick={() => setIsConfirming(false)} 
           >
             {confirmLabel}
           </button>
@@ -40,7 +40,8 @@ export function ProtectedRoleButton({
         
         <button
           onClick={() => setIsConfirming(false)}
-          className="px-2 py-1 text-sm text-neutral-500 hover:text-neutral-700 dark:text-neutral-400"
+          className="btn btn-secondary btn-sm"
+          type="button"
         >
           Cancel
         </button>
@@ -53,6 +54,7 @@ export function ProtectedRoleButton({
     <button
       onClick={() => setIsConfirming(true)}
       className={cssClass}
+      type="button"
     >
       {buttonLabel}
     </button>

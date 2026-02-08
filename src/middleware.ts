@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 // 1. Define Route Matchers
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]); // Update this if your admin route is different
-const isPublicRoute = createRouteMatcher(["/", "/sign-in(.*)", "/sign-up(.*)", "/api/webhooks/clerk(.*)"]);
+const isPublicRoute = createRouteMatcher(["/", "/products(.*)", "/about", "/contact","/sign-in(.*)", "/sign-up(.*)", "/api/webhooks/clerk(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
   // Fetch all auth data at once

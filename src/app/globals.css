@@ -24,3 +24,192 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+/* Orange, Black, White Color Scheme */
+:root {
+  --primary-orange: #ff8c42;
+  --dark-orange: #e67a2e;
+  --light-orange: #ffab70;
+  --dark-bg: #1a1a1a;
+  --light-bg: #ffffff;
+}
+
+/* Reset body padding */
+body {
+  padding-top: 0;
+  background-color: #f5f5f5;
+}
+
+/* Orange utility classes */
+.text-orange {
+  color: var(--primary-orange) !important;
+}
+
+.bg-orange {
+  background-color: var(--primary-orange) !important;
+}
+
+.btn-orange {
+  background-color: var(--primary-orange);
+  border-color: var(--primary-orange);
+  color: white;
+  font-weight: 500;
+}
+
+.btn-orange:hover {
+  background-color: var(--dark-orange);
+  border-color: var(--dark-orange);
+  color: white;
+}
+
+.btn-orange:focus {
+  box-shadow: 0 0 0 0.25rem rgba(255, 140, 66, 0.25);
+}
+
+.border-orange {
+  border-color: var(--primary-orange) !important;
+}
+
+/* Header Styling - Compact */
+header {
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+header .fs-5 {
+  font-size: 1.1rem !important;
+}
+
+/* Search bar styling */
+.input-group .form-control:focus {
+  border-color: var(--primary-orange);
+  box-shadow: 0 0 0 0.25rem rgba(255, 140, 66, 0.15);
+}
+
+.input-group-sm .form-control {
+  font-size: 0.875rem;
+}
+
+/* Icon hover effects */
+header a i,
+.nav-link i {
+  transition: all 0.3s ease;
+}
+
+header a:hover i {
+  transform: scale(1.1);
+  color: var(--primary-orange) !important;
+}
+
+/* Navbar Styling - Dark with orange accents */
+.navbar-dark {
+  background-color: var(--dark-bg) !important;
+}
+
+.navbar-dark .nav-link {
+  color: rgba(255, 255, 255, 0.85) !important;
+  padding: 0.75rem 1rem !important;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.navbar-dark .nav-link:hover {
+  color: var(--primary-orange) !important;
+  background-color: rgba(255, 140, 66, 0.1);
+}
+
+/* Dropdown styling */
+.dropdown-menu {
+  border: none;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  border-radius: 0.375rem;
+  margin-top: 0.25rem;
+}
+
+.dropdown-header {
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dropdown-item {
+  transition: all 0.3s ease;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.dropdown-item:hover {
+  background-color: rgba(255, 140, 66, 0.1);
+  color: var(--dark-bg);
+  padding-left: 1.25rem;
+}
+
+.dropdown-item i {
+  width: 1.25rem;
+  transition: transform 0.3s ease;
+}
+
+.dropdown-item:hover i {
+  transform: translateX(3px);
+}
+
+/* Remove default button styling for dropdown toggles */
+.navbar-dark .dropdown-toggle {
+  color: rgba(255, 255, 255, 0.85) !important;
+  padding: 0.75rem 1rem !important;
+}
+
+.navbar-dark .dropdown-toggle:hover {
+  color: var(--primary-orange) !important;
+}
+
+.navbar-dark .dropdown-toggle::after {
+  margin-left: 0.5rem;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 991.98px) {
+  .navbar-collapse {
+    background-color: var(--dark-bg);
+    padding: 1rem;
+    border-radius: 0.375rem;
+    margin-top: 0.5rem;
+  }
+  
+  .nav-item {
+    margin: 0.25rem 0;
+  }
+}
+
+@media (max-width: 767.98px) {
+  header .fs-5 {
+    font-size: 0.95rem !important;
+  }
+  
+  header i.fs-4 {
+    font-size: 1.25rem !important;
+  }
+}
+
+/* Active nav link */
+.nav-link.active {
+  color: var(--primary-orange) !important;
+  background-color: rgba(255, 140, 66, 0.15) !important;
+}
+
+/* Smooth transitions */
+* {
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+a {
+  transition: all 0.3s ease;
+}
+
+/* Vertical divider styling */
+.vr {
+  background-color: rgba(0, 0, 0, 0.1);
+  width: 3px;
+  opacity: 1;
+}

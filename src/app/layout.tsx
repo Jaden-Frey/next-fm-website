@@ -3,6 +3,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css'; 
 import './theme.css'; 
+import 'bootstrap-icons/font/bootstrap-icons.css';
 import Header from '../components/header';
 import Script from 'next/script'; 
 
