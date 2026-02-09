@@ -12,6 +12,7 @@
     "@clerk/nextjs": "^6.37.3",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
+    "cloudinary": "^2.9.0",
     "mongodb": "^7.1.0",
     "mongoose": "^9.1.6",
     "next": "16.1.6",

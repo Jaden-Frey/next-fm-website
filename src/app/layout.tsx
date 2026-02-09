@@ -6,6 +6,7 @@ import './theme.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import Header from '../components/header';
 import Script from 'next/script'; 
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -33,8 +34,11 @@ export default function RootLayout({
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
           <Header />
           <main>{children}</main>
-          {/* Bootstrap JS bundle is required for the mobile hamburger menu */}
-          <Script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" />
+          {/* Bootstrap JS bundle - load after page renders */}
+          <Script 
+            src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" 
+            strategy="afterInteractive"
+          />
         </body>
       </html>
     </ClerkProvider>
