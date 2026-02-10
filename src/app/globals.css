@@ -7,6 +7,8 @@
   --primary-orange: #ff8c42;
   --dark-orange: #e67a2e;
   --light-orange: #ffab70;
+  --dark-bg: #1a1a1a;
+  --light-bg: #ffffff;
 }
 
 @theme inline {
@@ -16,48 +18,136 @@
   --font-mono: var(--font-geist-mono);
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
 /* 2. Base Resets */
 body {
+  padding-top: 0;
   background-color: #f8f9fa;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: #333;
 }
 
-a { text-decoration: none; transition: all 0.2s ease; }
+a { 
+  text-decoration: none; 
+  transition: all 0.2s ease; 
+}
 
 /* 3. Orange Utilities */
-.text-orange { color: var(--primary-orange) !important; }
-.bg-orange { background-color: var(--primary-orange) !important; }
+.text-orange { 
+  color: var(--primary-orange) !important; 
+}
+
+.bg-orange { 
+  background-color: var(--primary-orange) !important; 
+}
+
 .btn-orange {
   background-color: var(--primary-orange);
   border: 1px solid var(--primary-orange);
   color: white;
+  font-weight: 500;
   transition: all 0.3s ease;
 }
+
 .btn-orange:hover {
   background-color: var(--dark-orange);
   border-color: var(--dark-orange);
+  color: white;
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(255, 140, 66, 0.3);
 }
 
-/* 4. Navigation Menu Styling */
-.navbar-nav .nav-link {
-  font-weight: 600 !important;
-  text-transform: uppercase;
-  font-size: 0.95rem; 
-  letter-spacing: 0.5px;
-  color: #4a4a4a !important; 
-  padding: 10px 15px;
+.btn-orange:focus {
+  box-shadow: 0 0 0 0.25rem rgba(255, 140, 66, 0.25);
 }
-.navbar-dark .navbar-nav .nav-link {
-  color: rgba(255,255,255,0.9) !important;
+
+/* Outline Orange Button */
+.btn-outline-orange {
+  background-color: transparent;
+  border: 1px solid var(--primary-orange);
+  color: var(--primary-orange);
+  font-weight: 500;
 }
-.navbar-nav .nav-link:hover {
+
+.btn-outline-orange:hover {
+  background-color: var(--primary-orange);
+  border-color: var(--primary-orange);
+  color: white;
+}
+
+.btn-outline-orange:focus {
+  box-shadow: 0 0 0 0.25rem rgba(255, 140, 66, 0.25);
+}
+
+.border-orange {
+  border-color: var(--primary-orange) !important;
+}
+
+/* 4. Header Styling - Compact */
+header {
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+header .fs-5 {
+  font-size: 1.1rem !important;
+}
+
+/* Search bar styling */
+.input-group .form-control:focus {
+  border-color: var(--primary-orange);
+  box-shadow: 0 0 0 0.25rem rgba(255, 140, 66, 0.15);
+}
+
+.input-group-sm .form-control {
+  font-size: 0.875rem;
+}
+
+/* Icon hover effects */
+header a i,
+.nav-link i {
+  transition: all 0.3s ease;
+}
+
+header a:hover i {
+  transform: scale(1.1);
   color: var(--primary-orange) !important;
 }
 
-/* 5. Hero Section */
+/* 5. Navbar Styling - Dark with orange accents */
+.navbar-dark {
+  background-color: var(--dark-bg) !important;
+}
+
+.navbar-dark .nav-link {
+  color: rgba(255, 255, 255, 0.85) !important;
+  padding: 0.75rem 1rem !important;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  font-size: 0.95rem;
+  display: inline-block !important;
+}
+
+.navbar-dark .nav-link:hover {
+  color: var(--primary-orange) !important;
+  background-color: rgba(255, 140, 66, 0.1);
+  border-radius: 0.375rem;
+}
+
+/* Active nav link */
+.nav-link.active {
+  color: var(--primary-orange) !important;
+  background-color: rgba(255, 140, 66, 0.15) !important;
+  border-radius: 0.375rem;
+}
+
+/* 6. Hero Section */
 .hero-static {
   background-image: url('https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=2069&auto=format&fit=crop');
   background-size: cover;
@@ -75,6 +165,10 @@ a { text-decoration: none; transition: all 0.2s ease; }
   inset: 0;
   background: linear-gradient(135deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 100%);
   z-index: 1;
+}
+
+.min-vh-75 {
+  min-height: 75vh;
 }
 
 /* 7. Category Banner (Dark) */
@@ -96,17 +190,34 @@ a { text-decoration: none; transition: all 0.2s ease; }
   transition: all 0.3s ease;
 }
 
+/* Category Card Hover - Subtle white glow */
+.category-card-dark {
+  transition: all 0.3s ease;
+}
+
 .category-card-dark:hover .category-icon-wrapper-dark {
-  background: var(--primary-orange);
-  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.15);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
 .category-card-dark:hover h5 {
-  color: var(--primary-orange) !important;
+  color: white !important;
+  transform: translateY(-3px);
+  transition: all 0.3s ease;
 }
 
-/* --- NEW: Upload Section Styles (Screenshot Design) --- */
+.category-card-dark:hover .text-white-50 {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
 
+.category-card-dark:hover i {
+  transform: scale(1.2);
+  filter: brightness(1.2);
+  transition: all 0.3s ease;
+}
+
+/* 8. Upload Section Styles */
 .card-upload {
   background: #ffffff;
   border-radius: 8px;
@@ -117,7 +228,7 @@ a { text-decoration: none; transition: all 0.2s ease; }
 }
 
 .card-header-orange {
-  background-color: #ed8936; /* Soft Orange */
+  background-color: #ed8936;
   color: white;
   padding: 1rem 1.5rem;
   font-weight: 600;
@@ -186,4 +297,78 @@ a { text-decoration: none; transition: all 0.2s ease; }
 .dropzone-subtext {
   font-size: 0.85rem;
   color: #94a3b8;
+}
+
+/* 9. Feature Cards */
+.feature-card {
+  background: white;
+  border-radius: 12px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  height: 100%;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon i {
+  font-size: 3rem;
+}
+
+/* 10. About Image Placeholder */
+.about-image-placeholder {
+  background: linear-gradient(135deg, var(--primary-orange) 0%, var(--dark-orange) 100%);
+  border-radius: 12px;
+  height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 8rem;
+}
+
+/* 11. CTA Section */
+.cta-section {
+  background: linear-gradient(135deg, var(--dark-bg) 0%, #333 100%);
+  position: relative;
+}
+
+/* 12. Vertical divider styling */
+.vr {
+  background-color: rgba(0, 0, 0, 0.1);
+  width: 1px;
+  opacity: 1;
+}
+
+/* 13. Smooth transitions */
+* {
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+a {
+  transition: all 0.3s ease;
+}
+
+/* 14. Responsive Design */
+@media (max-width: 768px) {
+  .hero-static {
+    min-height: 500px;
+  }
+  
+  .display-3 {
+    font-size: 2.5rem;
+  }
+  
+  .upload-dropzone {
+    padding: 2rem 1rem;
+  }
+
+  header .fs-5 {
+    font-size: 0.95rem !important;
+  }
+  
+  header i.fs-4 {
+    font-size: 1.25rem !important;
+  }
 }
