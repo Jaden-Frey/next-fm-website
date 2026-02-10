@@ -28,7 +28,6 @@ export default function ProductsPage() {
            ...p,
            id: Number(p.id),
            price: Number(p.price),
-           // CRITICAL: If p.image is valid, use it. If null/empty, use fallback.
            image: p.image && p.image.length > 0 ? p.image : FALLBACK_IMAGE
         }));
 
