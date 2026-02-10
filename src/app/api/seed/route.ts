@@ -3,13 +3,13 @@ import { NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
 import Product from "../../../lib/models/product";
 import { connect } from "../../../lib/mongodb";
-import { productsData } from "../../products/productsdata"; 
+import { productsData } from "../../products/productsdata"; // Adjust path if needed
 
 // Configure Cloudinary explicitly (or ensure your env vars are set)
 cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET,
 });
 
 export async function GET() {
