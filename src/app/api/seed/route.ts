@@ -1,11 +1,9 @@
-// src/app/api/products/seed/route.ts
 import { NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
 import Product from "../../../lib/models/product";
 import { connect } from "../../../lib/mongodb";
-import { productsData } from "../../products/productsdata"; // Adjust path if needed
+import { productsData } from "../../products/productsdata";
 
-// Configure Cloudinary explicitly (or ensure your env vars are set)
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.API_KEY,
@@ -16,58 +14,47 @@ export async function GET() {
   try {
     await connect();
 
-    // 1. Security Check (Optional but recommended for Prod)
-    // You might want to protect this route so random users can't reset your DB
-    // const { searchParams } = new URL(request.url);
-    // if (searchParams.get('secret') !== process.env.SEED_SECRET) {
-    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    // }
-
-    // 2. Clear existing products
+    // Clear existing products
     await Product.deleteMany({});
-    console.log("Existing products cleared.");
 
-    const results = [];
+    const seededProducts = [];
 
     for (const p of productsData) {
       try {
-        console.log(`Processing: ${p.name}`);
-
-        // This tells Cloudinary to fetch the image from Unsplash.
-        const uploadResult = await cloudinary.uploader.upload(p.image, {
-          folder: "products-catalog", 
+        // Upload directly from remote URL (serverless friendly)
+        const upload = await cloudinary.uploader.upload(p.image, {
+          folder: "meat-app-products",
           public_id: p.sku, 
           overwrite: true
         });
 
-        // 4. Create DB Entry
+        // Save to MongoDB
         const newProduct = await Product.create({
-          id: p.id,
+          id: Number(p.id),
           category: p.category,
           name: p.name,
           sku: p.sku,
-          price: p.price,
-          originalPrice: p.originalPrice,
-          onSale: p.onSale,
+          price: Number(p.price),
+          originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
+          onSale: Boolean(p.onSale),
           description: p.description,
-          image: uploadResult.secure_url, 
+          image: upload.secure_url,
         });
 
-        results.push({ name: p.name, status: "success", url: uploadResult.secure_url });
-      
-      } catch (innerError: any) {
-        console.error(`Failed to seed ${p.name}:`, innerError);
-        results.push({ name: p.name, status: "error", error: innerError.message });
+        seededProducts.push(newProduct.name);
+      } catch (err) {
+        console.error(`Failed to seed ${p.sku}:`, err);
       }
     }
 
     return NextResponse.json({ 
-      message: "Seed operation completed", 
-      results 
-    }, { status: 200 });
+      success: true, 
+      count: seededProducts.length, 
+      products: seededProducts 
+    });
 
-  } catch (err: any) {
-    console.error("Critical Seed Error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (error: any) {
+    console.error("Seed Error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
