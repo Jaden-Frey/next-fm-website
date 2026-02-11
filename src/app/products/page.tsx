@@ -1,12 +1,12 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation"; 
 import { categories, productsData, Product } from "./productsdata";
 
 const FALLBACK_IMAGE = 'https://placehold.co/600x400/222/fff?text=Coming+Soon';
 
-export default function ProductsPage() {
+function ProductsContent() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -66,7 +66,6 @@ export default function ProductsPage() {
     return () => controller.abort();
   }, []);
 
-  // Filter products based on selected category
   const filteredProducts = selectedCategory === "all"
     ? products
     : products.filter((p) => p.category === selectedCategory);
@@ -97,7 +96,6 @@ export default function ProductsPage() {
 
   return (
     <>
-      {/* HEADER SECTION */}
       <header className="py-5 bg-dark position-relative" style={{ overflow: 'hidden' }}>
         <div 
           style={{
@@ -115,7 +113,6 @@ export default function ProductsPage() {
         </div>
       </header>
 
-      {/* CATEGORY FILTER */}
       <section className="py-4 bg-light">
         <div className="container text-center">
           <div className="btn-group flex-wrap" role="group" aria-label="Category filter">
@@ -145,10 +142,8 @@ export default function ProductsPage() {
         </div>
       </section>
 
-      {/* PRODUCTS GRID */}
       <section className="py-5">
         <div className="container">
-          {/* Show category title */}
           <div className="mb-4">
             <h2 className="h3 fw-bold">
               {selectedCategory === 'all' 
@@ -167,7 +162,6 @@ export default function ProductsPage() {
               {filteredProducts.map((product) => (
                 <div key={product.id} className="col">
                   <div className="card h-100 shadow-sm border-0 transition-transform hover-lift">
-                    {/* Sale Badge */}
                     {product.onSale && (
                       <div 
                         className="badge bg-danger text-white position-absolute top-0 end-0 m-2"
@@ -177,7 +171,6 @@ export default function ProductsPage() {
                       </div>
                     )}
                     
-                    {/* Product Image */}
                     <Link href={`/products/${product.id}`} className="text-decoration-none">
                       <img
                         src={product.image}
@@ -198,7 +191,6 @@ export default function ProductsPage() {
                       <div className="small text-muted mb-1">{product.sku}</div>
                       <h5 className="fw-bolder mb-2">{product.name}</h5>
                       
-                      {/* Price */}
                       <div className="mb-3 mt-auto">
                         {product.originalPrice && product.onSale && (
                           <span className="text-muted text-decoration-line-through me-2">
@@ -241,5 +233,22 @@ export default function ProductsPage() {
         }
       `}</style>
     </>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-vh-100 d-flex align-items-center justify-content-center">
+        <div className="text-center">
+          <div className="spinner-border text-dark mb-3" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="text-muted">Loading...</p>
+        </div>
+      </div>
+    }>
+      <ProductsContent />
+    </Suspense>
   );
 }
