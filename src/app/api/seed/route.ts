@@ -11,7 +11,6 @@ export async function GET() {
     await Product.deleteMany({});
 
     // 2. Insert data directly (No Cloudinary, No Uploads)
-    // The image URLs in productsData are already valid web links.
     await Product.insertMany(productsData);
 
     return NextResponse.json({ 

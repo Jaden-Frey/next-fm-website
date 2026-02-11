@@ -7,6 +7,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import Header from '../components/header';
 import Script from 'next/script'; 
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { WishlistProvider } from '../context/wishlistcontext'; 
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -32,9 +33,12 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          <Header />
-          <main>{children}</main>
-          {/* Bootstrap JS bundle - load after page renders */}
+        
+          <WishlistProvider>
+            <Header />
+            <main>{children}</main>
+          </WishlistProvider>
+         
           <Script 
             src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" 
             strategy="afterInteractive"

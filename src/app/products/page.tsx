@@ -48,8 +48,7 @@ export default function ProductsPage() {
           price: Number(p.price),
           originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
           image: p.image && p.image.length > 0 ? p.image : FALLBACK_IMAGE,
-          onSale: Boolean(p.onSale),
-          grammage: p.grammage || 'N/A' 
+          onSale: Boolean(p.onSale)
         }));
 
         setProducts(normalized);
@@ -149,6 +148,7 @@ export default function ProductsPage() {
       {/* PRODUCTS GRID */}
       <section className="py-5">
         <div className="container">
+          {/* Show category title */}
           <div className="mb-4">
             <h2 className="h3 fw-bold">
               {selectedCategory === 'all' 
@@ -167,6 +167,7 @@ export default function ProductsPage() {
               {filteredProducts.map((product) => (
                 <div key={product.id} className="col">
                   <div className="card h-100 shadow-sm border-0 transition-transform hover-lift">
+                    {/* Sale Badge */}
                     {product.onSale && (
                       <div 
                         className="badge bg-danger text-white position-absolute top-0 end-0 m-2"
@@ -176,6 +177,7 @@ export default function ProductsPage() {
                       </div>
                     )}
                     
+                    {/* Product Image */}
                     <Link href={`/products/${product.id}`} className="text-decoration-none">
                       <img
                         src={product.image}
@@ -194,11 +196,9 @@ export default function ProductsPage() {
 
                     <div className="card-body text-center d-flex flex-column">
                       <div className="small text-muted mb-1">{product.sku}</div>
-                      <h5 className="fw-bolder mb-1">{product.name}</h5>
+                      <h5 className="fw-bolder mb-2">{product.name}</h5>
                       
-                      {/* --- NEW: GRAMMAGE DISPLAY --- */}
-                      <div className="text-muted small mb-2">{product.grammage}</div>
-                      
+                      {/* Price */}
                       <div className="mb-3 mt-auto">
                         {product.originalPrice && product.onSale && (
                           <span className="text-muted text-decoration-line-through me-2">

@@ -1,5 +1,6 @@
 export interface Product {
   id: number;
+  _id?: string;
   category: 'beef' | 'pork' | 'chicken' | 'lamb';
   name: string;
   sku: string;
@@ -8,7 +9,6 @@ export interface Product {
   onSale: boolean;
   image: string;
   description: string;
-  grammage: string; 
 }
 
 export interface Category {
@@ -19,7 +19,7 @@ export interface Category {
 const PLACEHOLDER_IMG = 'https://placehold.co/600x400/222/fff?text=Coming+Soon';
 
 export const productsData: Product[] = [
-  // --- BEEF ---
+  // --- BEEF (5 Items) ---
   {
     id: 1,
     category: 'beef',
@@ -28,9 +28,8 @@ export const productsData: Product[] = [
     price: 285,
     originalPrice: 320,
     onSale: true,
-    image: '/images/BEEF-001.png',
-    description: 'Classic T-Bone combining the best of both worlds.',
-    grammage: '750g'
+    image: '/images/BEEF-001.png', 
+    description: 'Classic T-Bone combining the best of both worlds - tender filet on one side, flavorful strip on the other.'
   },
   {
     id: 2,
@@ -39,9 +38,8 @@ export const productsData: Product[] = [
     sku: 'BEEF-002',
     price: 245,
     onSale: false,
-    image: '/images/BEEF-002.png',
-    description: 'Premium grain-fed ribeye steak with exceptional marbling.',
-    grammage: '300g'
+    image: '/images/BEEF-002.png', 
+    description: 'Premium grain-fed ribeye steak with exceptional marbling. Cut to perfection at 2.5cm thickness.'
   },
   {
     id: 3, 
@@ -51,8 +49,7 @@ export const productsData: Product[] = [
     price: 220,
     onSale: false, 
     image: '/images/BEEF-003.png', 
-    description: 'Premium lean ground beef, ideal for bolognese.',
-    grammage: '1kg'
+    description: 'Premium lean ground beef, ideal for bolognese, lasagna, or homemade burgers.'
   },
   {
     id: 4, 
@@ -62,8 +59,7 @@ export const productsData: Product[] = [
     price: 110,
     onSale: true, 
     image: '/images/BEEF-004.png', 
-    description: 'Succulent beef short ribs, perfect for slow cooking.',
-    grammage: '1kg'
+    description: 'Succulent beef short ribs, perfect for slow cooking or braising.'
   },
   {
     id: 5, 
@@ -73,8 +69,7 @@ export const productsData: Product[] = [
     price: 130,
     onSale: false, 
     image: '/images/BEEF-005.png', 
-    description: 'Thick, juicy handcrafted beef burger patties.',
-    grammage: '4 x 150g'
+    description: 'Thick, juicy handcrafted beef burger patties. Ready for the grill.'
   },
 
   // --- PORK ---
@@ -86,8 +81,7 @@ export const productsData: Product[] = [
     price: 145,
     onSale: true, 
     image: '/images/PORK-001.png', 
-    description: 'Thick-cut pork chops.',
-    grammage: '1kg'
+    description: 'Thick-cut pork chops.'
   },
   {
     id: 7, 
@@ -97,8 +91,7 @@ export const productsData: Product[] = [
     price: 185,
     onSale: false, 
     image: '/images/PORK-002.png', 
-    description: 'Premium pork belly.',
-    grammage: '1.2kg'
+    description: 'Premium pork belly.'
   },
   {
     id: 8, 
@@ -108,8 +101,7 @@ export const productsData: Product[] = [
     price: 195,
     onSale: true, 
     image: '/images/PORK-003.png', 
-    description: 'Meaty spare ribs.',
-    grammage: '1kg'
+    description: 'Meaty spare ribs.'
   },
   {
     id: 9, 
@@ -119,8 +111,7 @@ export const productsData: Product[] = [
     price: 155,
     onSale: false, 
     image: '/images/PORK-004.png', 
-    description: 'Lean and tender pork loin.',
-    grammage: '1kg'
+    description: 'Lean and tender pork loin.'
   },
   {
     id: 10, 
@@ -130,8 +121,7 @@ export const productsData: Product[] = [
     price: 95,
     onSale: true, 
     image: '/images/PORK-005.png', 
-    description: 'Traditional pork sausages.',
-    grammage: '500g'
+    description: 'Traditional pork sausages.'
   },
 
   // --- CHICKEN ---
@@ -143,8 +133,7 @@ export const productsData: Product[] = [
     price: 135,
     onSale: false, 
     image: '/images/CHIC-005.png', 
-    description: 'Free-range whole chicken.',
-    grammage: '1.4kg'
+    description: 'Free-range whole chicken.'
   },
   {
     id: 12, 
@@ -154,8 +143,7 @@ export const productsData: Product[] = [
     price: 115,
     onSale: true, 
     image: '/images/CHIC-002.png', 
-    description: 'Skinless, boneless chicken breasts.',
-    grammage: '1kg'
+    description: 'Skinless, boneless chicken breasts.'
   },
   {
     id: 13, 
@@ -165,8 +153,7 @@ export const productsData: Product[] = [
     price: 95,
     onSale: false, 
     image: '/images/CHIC-003.png', 
-    description: 'Bone-in chicken thighs.',
-    grammage: '1kg'
+    description: 'Bone-in chicken thighs.'
   },
   {
     id: 14, 
@@ -176,8 +163,7 @@ export const productsData: Product[] = [
     price: 85,
     onSale: true, 
     image: '/images/CHIC-004.png', 
-    description: 'Fresh chicken wings.',
-    grammage: '1kg'
+    description: 'Fresh chicken wings.'
   },
   {
     id: 15, 
@@ -187,8 +173,7 @@ export const productsData: Product[] = [
     price: 75,
     onSale: false, 
     image: '/images/CHIC-001.png', 
-    description: 'Juicy chicken drumsticks.',
-    grammage: '1kg'
+    description: 'Juicy chicken drumsticks.'
   },
 
   // --- LAMB ---
@@ -200,8 +185,7 @@ export const productsData: Product[] = [
     price: 295,
     onSale: true, 
     image: '/images/LAMB-001.png', 
-    description: 'Premium lamb loin chops.',
-    grammage: '1kg'
+    description: 'Premium lamb loin chops.'
   },
   {
     id: 17, 
@@ -211,8 +195,7 @@ export const productsData: Product[] = [
     price: 385,
     onSale: false, 
     image: '/images/LAMB-002.png', 
-    description: 'Whole leg of lamb.',
-    grammage: '2.5kg'
+    description: 'Whole leg of lamb.'
   },
   {
     id: 18, 
@@ -222,8 +205,7 @@ export const productsData: Product[] = [
     price: 265,
     onSale: true, 
     image: '/images/LAMB-003.png', 
-    description: 'Lamb shoulder perfect for slow roasting.',
-    grammage: '1.8kg'
+    description: 'Lamb shoulder perfect for slow roasting.'
   },
   {
     id: 19, 
@@ -233,8 +215,7 @@ export const productsData: Product[] = [
     price: 425,
     onSale: false, 
     image: '/images/LAMB-004.png', 
-    description: 'French-trimmed rack of lamb.',
-    grammage: '800g'
+    description: 'French-trimmed rack of lamb.'
   },
   {
     id: 20, 
@@ -244,8 +225,7 @@ export const productsData: Product[] = [
     price: 235,
     onSale: false, 
     image: '/images/LAMB-005.png', 
-    description: 'Meaty lamb shanks.',
-    grammage: '2 x 400g'
+    description: 'Meaty lamb shanks.'
   }
 ];
 
