@@ -1,4 +1,3 @@
-// src/app/products/[id]/page.tsx
 "use client";
 import React, { useState } from 'react';
 import Link from 'next/link';
@@ -28,7 +27,7 @@ export default function ProductDetailPage() {
     );
   }
 
-  // Get related products from the same category (excluding current product)
+  // Get related products
   const relatedProducts: Product[] = productsData
     .filter(p => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
@@ -102,7 +101,7 @@ export default function ProductDetailPage() {
                   <span className={`fw-bold ${product.onSale ? 'text-danger' : ''}`} style={{ fontSize: '2.5rem' }}>
                     R{product.price.toFixed(2)}
                   </span>
-                  <span className="text-muted ms-2">per unit</span>
+                  <span className="text-muted ms-2">/ {product.grammage}</span>
                 </div>
                 {product.originalPrice && product.onSale && (
                   <div className="alert alert-success mt-2 py-2">
@@ -152,7 +151,7 @@ export default function ProductDetailPage() {
                 {quantity > 1 && (
                   <div className="alert alert-info py-2 mb-3">
                     <div className="d-flex justify-content-between">
-                      <span>Subtotal ({quantity} units):</span>
+                      <span>Subtotal ({quantity} x {product.grammage}):</span>
                       <strong>R{totalPrice.toFixed(2)}</strong>
                     </div>
                     {totalSavings > 0 && (
@@ -183,10 +182,10 @@ export default function ProductDetailPage() {
                   <h6 className="fw-bold mb-3">Product Features:</h6>
                   <ul className="mb-0">
                     <li className="mb-2">Premium quality {product.category}</li>
+                    <li className="mb-2">Weight: {product.grammage}</li>
                     <li className="mb-2">Delivered fresh and vacuum sealed</li>
                     <li className="mb-2">Sourced from trusted local suppliers</li>
                     <li className="mb-2">100% quality guarantee</li>
-                    <li className="mb-2">Perfect for grilling, roasting, or pan-frying</li>
                   </ul>
                 </div>
               </div>
@@ -212,7 +211,6 @@ export default function ProductDetailPage() {
               {relatedProducts.map(relatedProduct => (
                 <div key={relatedProduct.id} className="col mb-5">
                   <div className="card h-100 shadow-sm border-0">
-                    {/* Sale Badge */}
                     {relatedProduct.onSale && (
                       <div 
                         className="badge bg-danger text-white position-absolute" 
@@ -222,7 +220,6 @@ export default function ProductDetailPage() {
                       </div>
                     )}
                     
-                    {/* Product Image */}
                     <Link href={`/products/${relatedProduct.id}`}>
                       <img 
                         className="card-img-top" 
@@ -241,7 +238,8 @@ export default function ProductDetailPage() {
                     
                     <div className="card-body p-4 text-center">
                       <div className="small text-muted">{relatedProduct.sku}</div>
-                      <h5 className="fw-bolder mb-2">{relatedProduct.name}</h5>
+                      <h5 className="fw-bolder mb-1">{relatedProduct.name}</h5>
+                      <div className="text-muted small mb-2">{relatedProduct.grammage}</div>
                       
                       <div className="mt-2">
                         {relatedProduct.originalPrice && relatedProduct.onSale && (

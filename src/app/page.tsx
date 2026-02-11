@@ -138,7 +138,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 3. Browse Categories Banner */}
+{/* 3. Browse Categories Banner */}
       <section className="category-banner py-5 bg-dark text-white">
         <div className="container py-4">
           <div className="text-center mb-5">
@@ -150,7 +150,8 @@ export default function Home() {
           <div className="row g-4 justify-content-center">
             {/* Beef */}
             <div className="col-6 col-md-3">
-              <Link href="/products/categories/beef" className="category-card-dark d-block text-decoration-none text-center">
+              {/* CHANGE 1: Update href to use query param */}
+              <Link href="/products?category=beef" className="category-card-dark d-block text-decoration-none text-center">
                 <div className="category-icon-wrapper-dark mb-3 mx-auto rounded-circle d-flex align-items-center justify-content-center">
                    <i className="bi bi-circle-fill text-danger fs-3"></i>
                 </div>
@@ -161,7 +162,7 @@ export default function Home() {
 
             {/* Chicken */}
             <div className="col-6 col-md-3">
-              <Link href="/products/categories/chicken" className="category-card-dark d-block text-decoration-none text-center">
+              <Link href="/products?category=chicken" className="category-card-dark d-block text-decoration-none text-center">
                 <div className="category-icon-wrapper-dark mb-3 mx-auto rounded-circle d-flex align-items-center justify-content-center">
                    <i className="bi bi-circle-fill text-warning fs-3"></i>
                 </div>
@@ -172,7 +173,7 @@ export default function Home() {
 
             {/* Pork */}
             <div className="col-6 col-md-3">
-              <Link href="/products/categories/pork" className="category-card-dark d-block text-decoration-none text-center">
+              <Link href="/products?category=pork" className="category-card-dark d-block text-decoration-none text-center">
                 <div className="category-icon-wrapper-dark mb-3 mx-auto rounded-circle d-flex align-items-center justify-content-center">
                    <i className="bi bi-circle-fill text-info fs-3"></i>
                 </div>
@@ -183,7 +184,7 @@ export default function Home() {
 
             {/* Lamb */}
             <div className="col-6 col-md-3">
-              <Link href="/products/categories/lamb" className="category-card-dark d-block text-decoration-none text-center">
+              <Link href="/products?category=lamb" className="category-card-dark d-block text-decoration-none text-center">
                 <div className="category-icon-wrapper-dark mb-3 mx-auto rounded-circle d-flex align-items-center justify-content-center">
                    <i className="bi bi-circle-fill text-success fs-3"></i>
                 </div>

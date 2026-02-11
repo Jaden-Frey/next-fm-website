@@ -10,6 +10,7 @@ const ProductSchema = new Schema({
   onSale: { type: Boolean, default: false },
   image: { type: String, required: true }, 
   description: { type: String, required: true },
+  grammage: { type: String, required: true },
 }, { timestamps: true });
 
 const Product = models.Product || model('Product', ProductSchema);

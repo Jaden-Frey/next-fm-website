@@ -1,7 +1,7 @@
-// src/app/products/page.tsx
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation"; 
 import { categories, productsData, Product } from "./productsdata";
 
 const FALLBACK_IMAGE = 'https://placehold.co/600x400/222/fff?text=Coming+Soon';
@@ -12,6 +12,17 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [error, setError] = useState<string | null>(null);
 
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const categoryFromUrl = searchParams.get('category');
+    if (categoryFromUrl) {
+      setSelectedCategory(categoryFromUrl);
+    } else {
+      setSelectedCategory("all");
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     const controller = new AbortController();
     
@@ -20,7 +31,6 @@ export default function ProductsPage() {
       setError(null);
       
       try {
-        // Try fetching from API first
         const res = await fetch("/api/products", { 
           signal: controller.signal,
           cache: 'no-store'
@@ -32,21 +42,20 @@ export default function ProductsPage() {
         
         const data = await res.json();
         
-        // Normalize the data
         const normalized = (Array.isArray(data) ? data : []).map((p: any) => ({
           ...p,
           id: Number(p.id),
           price: Number(p.price),
           originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
           image: p.image && p.image.length > 0 ? p.image : FALLBACK_IMAGE,
-          onSale: Boolean(p.onSale)
+          onSale: Boolean(p.onSale),
+          grammage: p.grammage || 'N/A' 
         }));
 
         setProducts(normalized);
       } catch (err: any) {
         if (err.name !== "AbortError") {
           console.error("Failed to load from API, using static data:", err);
-          // Fallback to static data from productsdata.ts
           setProducts(productsData);
         }
       } finally {
@@ -114,7 +123,10 @@ export default function ProductsPage() {
             {categories.map((cat) => (
               <button
                 key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
+                onClick={() => {
+                   setSelectedCategory(cat.id);
+                   window.history.pushState(null, '', `?category=${cat.id}`);
+                }}
                 className={`btn m-1 ${
                   selectedCategory === cat.id 
                     ? "btn-dark" 
@@ -137,7 +149,6 @@ export default function ProductsPage() {
       {/* PRODUCTS GRID */}
       <section className="py-5">
         <div className="container">
-          {/* Show category title */}
           <div className="mb-4">
             <h2 className="h3 fw-bold">
               {selectedCategory === 'all' 
@@ -156,7 +167,6 @@ export default function ProductsPage() {
               {filteredProducts.map((product) => (
                 <div key={product.id} className="col">
                   <div className="card h-100 shadow-sm border-0 transition-transform hover-lift">
-                    {/* Sale Badge */}
                     {product.onSale && (
                       <div 
                         className="badge bg-danger text-white position-absolute top-0 end-0 m-2"
@@ -166,7 +176,6 @@ export default function ProductsPage() {
                       </div>
                     )}
                     
-                    {/* Product Image */}
                     <Link href={`/products/${product.id}`} className="text-decoration-none">
                       <img
                         src={product.image}
@@ -185,9 +194,11 @@ export default function ProductsPage() {
 
                     <div className="card-body text-center d-flex flex-column">
                       <div className="small text-muted mb-1">{product.sku}</div>
-                      <h5 className="fw-bolder mb-2">{product.name}</h5>
+                      <h5 className="fw-bolder mb-1">{product.name}</h5>
                       
-                      {/* Price */}
+                      {/* --- NEW: GRAMMAGE DISPLAY --- */}
+                      <div className="text-muted small mb-2">{product.grammage}</div>
+                      
                       <div className="mb-3 mt-auto">
                         {product.originalPrice && product.onSale && (
                           <span className="text-muted text-decoration-line-through me-2">
