@@ -45,33 +45,6 @@ const Header = () => {
             <div className="col-4">
               <div className="d-flex justify-content-end align-items-center gap-3">
                 <SignedIn>
-                  {/* Wishlist */}
-                  <Link 
-                    href="/wishlist" 
-                    className="text-decoration-none text-dark position-relative"
-                    title="Wishlist"
-                  >
-                    <i className="bi bi-heart fs-5"></i>
-                  </Link>
-
-                  {/* Orders */}
-                  <Link 
-                    href="/orders" 
-                    className="text-decoration-none text-dark position-relative"
-                    title="My Orders"
-                  >
-                    <i className="bi bi-bag fs-5"></i>
-                  </Link>
-
-                  {/* Cart */}
-                  <Link 
-                    href="/cart" 
-                    className="text-decoration-none text-dark position-relative"
-                    title="Shopping Cart"
-                  >
-                    <i className="bi bi-cart3 fs-5"></i>
-                  </Link>
-
                   {/* Divider between icons and avatar */}
                   <div className="vr" style={{height: '24px'}}></div>
 

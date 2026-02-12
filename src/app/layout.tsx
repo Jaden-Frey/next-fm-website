@@ -8,7 +8,6 @@ import Header from '../components/header';
 import Script from 'next/script'; 
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-// Import your providers
 import { WishlistProvider } from '../context/wishlistcontext'; 
 import { CartProvider } from '../context/cartcontext'; 
 
