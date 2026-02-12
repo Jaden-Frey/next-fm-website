@@ -5,7 +5,9 @@ import Product from "../../../lib/models/product";
 
 const connectDB = async () => {
   if (mongoose.connection.readyState === 0) {
-    await mongoose.connect(process.env.MONGODB_URL!);
+    await mongoose.connect(process.env.MONGODB_URL!, {
+      dbName: 'clerk-db', 
+    });
   }
 };
 
@@ -27,10 +29,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ items: [], total: 0 });
     }
     
-    // Filter out items where the product no longer exists (prevents crashes)
     const validItems = cart.items.filter((item: any) => item.productId !== null);
 
-    // If "null" items were found, clean up the database
     if (validItems.length < cart.items.length) {
       cart.items = validItems;
       await cart.save();
