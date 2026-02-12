@@ -3,14 +3,15 @@ import { NextResponse } from "next/server";
 
 // 1. Define Route Matchers
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]); 
-const isPublicRoute = createRouteMatcher(["/", "/products(.*)", "/about", "/contact","/wishlist","/sign-in(.*)", "/sign-up(.*)", "/api/webhooks/clerk(.*)", "/api/upload-image(.*)",
+const isPublicRoute = createRouteMatcher(["/", "/products(.*)", "/about", "/contact","/wishlist","/cart(.*)","/sign-in(.*)", "/sign-up(.*)", "/api/webhooks/clerk(.*)", "/api/upload-image(.*)",
   "/api/products(.*)", 
   "/api/seed(.*)",
-  "/api/wishlist(.*)"
+  "/api/wishlist(.*)",
+  "/api/cart",       
+  "/api/cart/(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
-  // Fetch all auth data at once
   const { userId, redirectToSignIn, sessionClaims } = await auth();
 
   // 2. Protect Authenticated Routes
@@ -29,8 +30,6 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(url);
   }
 });
-
-
 
 export const config = {
   matcher: [

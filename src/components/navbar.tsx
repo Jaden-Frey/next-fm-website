@@ -2,13 +2,15 @@
 
 import Link from 'next/link';
 import React from 'react';
+import { useCart } from '../context/cartcontext';
 
 const Navbar = () => {
+  const { itemCount, loading } = useCart(); 
+
   return (
     <nav className="navbar navbar-dark bg-dark py-3 d-flex justify-content-center sticky-top">
       <div className="container d-flex justify-content-center">
         <ul className="navbar-nav d-flex flex-row gap-4 align-items-center flex-wrap justify-content-center">
-          {/* Main Navigation */}
           <li className="nav-item">
             <Link href="/" className="nav-link">
               <i className="bi bi-house-door me-2"></i>
@@ -28,7 +30,6 @@ const Navbar = () => {
             </Link>
           </li>
         
-          {/* Divider (Hidden on small screens) */}
           <li className="nav-item d-none d-md-block border-start border-secondary mx-2" style={{height: '30px'}}></li>
 
           {/* User Actions */}
@@ -48,7 +49,11 @@ const Navbar = () => {
             <Link href="/cart" className="nav-link d-flex align-items-center">
               <i className="bi bi-cart-fill me-2"></i>
               Cart
-              <span className="badge bg-white text-dark ms-2 rounded-pill fw-bold">0</span>
+              {!loading && itemCount > 0 && (
+                <span className="badge bg-white text-dark ms-2 rounded-pill fw-bold">
+                  {itemCount}
+                </span>
+              )}
             </Link>
           </li>
         </ul>

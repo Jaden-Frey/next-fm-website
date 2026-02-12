@@ -7,7 +7,10 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import Header from '../components/header';
 import Script from 'next/script'; 
 import 'bootstrap/dist/css/bootstrap.min.css';
+
+// Import your providers
 import { WishlistProvider } from '../context/wishlistcontext'; 
+import { CartProvider } from '../context/cartcontext'; 
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -33,10 +36,11 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        
           <WishlistProvider>
-            <Header />
-            <main>{children}</main>
+            <CartProvider>
+              <Header />
+              <main>{children}</main>
+            </CartProvider>
           </WishlistProvider>
          
           <Script 

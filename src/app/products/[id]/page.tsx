@@ -2,14 +2,13 @@
 import { useParams } from 'next/navigation';
 import { productsData } from '../productsdata'; 
 import HeartButton from '../../../components/heartbutton'; 
+import AddToCart from '../../../components/addtocart'; 
 import Link from 'next/link';
-import { useState } from 'react';
 
 export default function ProductDetailPage() {
   const params = useParams();
   const productId = parseInt(params.id as string);
   const product = productsData.find(p => p.id === productId);
-  const [qty, setQty] = useState(1);
 
   if (!product) {
     return (
@@ -22,14 +21,6 @@ export default function ProductDetailPage() {
 
   return (
     <div className="container py-3" style={{ marginTop: '30px', minHeight: '80vh' }}>
-      <nav aria-label="breadcrumb" className="mb-2">
-        <ol className="breadcrumb">
-          <li className="breadcrumb-item"><Link href="/" className="text-decoration-none text-dark">Home</Link></li>
-          <li className="breadcrumb-item"><Link href="/products" className="text-decoration-none text-dark">Products</Link></li>
-          <li className="breadcrumb-item active" aria-current="page">{product.name}</li>
-        </ol>
-      </nav>
-
       <div className="row g-5">
         {/* Left Column: Image */}
         <div className="col-md-6">
@@ -56,23 +47,12 @@ export default function ProductDetailPage() {
           </p>
 
           <hr className="my-4" />
-
-          {/* Quantity Selector */}
-          <div className="d-flex align-items-center mb-4">
-             <label className="me-3 fw-bold">Quantity:</label>
-             <div className="input-group" style={{ width: '130px' }}>
-                <button className="btn btn-outline-secondary" onClick={() => setQty(q => Math.max(1, q - 1))}>-</button>
-                <input type="text" className="form-control text-center bg-white" value={qty} readOnly />
-                <button className="btn btn-outline-secondary" onClick={() => setQty(q => q + 1)}>+</button>
-             </div>
+          <div className="mb-4">
+             <AddToCart product={product} />
           </div>
 
-          {/* Action Buttons */}
-          <div className="d-grid gap-3">
-             <button className="btn btn-dark btn-lg">
-                Add to Cart • R{(product.price * qty).toFixed(2)}
-             </button>
-             
+          {/* Wishlist Button */}
+          <div className="d-grid">
              <HeartButton product={product} />
           </div>
 
