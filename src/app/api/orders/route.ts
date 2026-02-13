@@ -15,16 +15,27 @@ export async function GET(req: Request) {
   try {
     await connectDB();
     const guestId = req.headers.get("x-guest-id");
+    if (!guestId) return NextResponse.json({ orders: [] });
 
-    if (!guestId) {
-      return NextResponse.json({ orders: [] });
-    }
-
+    // 1. Fetch all orders sorted by newest first
     const orders = await Order.find({ guestId }).sort({ createdAt: -1 });
+
+    // If we have multiple orders, ensure only the first one (newest) is 'Pending'and all others are 'Completed'. This fixes old data.
+    
+    if (orders.length > 1) {
+      const newestOrderId = orders[0]._id;
+      await Order.updateMany(
+        { guestId, _id: { $ne: newestOrderId }, status: 'Pending' },
+        { $set: { status: 'Completed' } }
+      );
+      
+      // Refresh the list after update to show correct statuses immediately
+      const updatedOrders = await Order.find({ guestId }).sort({ createdAt: -1 });
+      return NextResponse.json({ orders: updatedOrders });
+    }
 
     return NextResponse.json({ orders });
   } catch (error: any) {
-    console.error("[GET /api/orders] Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -34,9 +45,7 @@ export async function POST(req: Request) {
     await connectDB();
     
     const guestId = req.headers.get("x-guest-id");
-    if (!guestId) {
-      return NextResponse.json({ error: "Missing Guest ID" }, { status: 400 });
-    }
+    if (!guestId) return NextResponse.json({ error: "Missing Guest ID" }, { status: 400 });
 
     const { customerDetails, items, totalAmount } = await req.json();
 
@@ -44,17 +53,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No items provided" }, { status: 400 });
     }
 
-    // 1. Create the Order
+    // Mark ALL previous pending orders as Completed before creating the new one
+    await Order.updateMany(
+      { guestId: guestId, status: 'Pending' },
+      { $set: { status: 'Completed' } }
+    );
+
     const newOrder = await Order.create({
       guestId,
-      items: items, 
-      totalAmount: totalAmount, 
-      status: 'Pending',
+      items, 
+      totalAmount, 
+      status: 'Pending', 
       customerDetails: customerDetails || {}, 
       createdAt: new Date(),
     });
 
-    // 2. Clear the Cart in the Database
     const cart = await Cart.findOne({ guestId });
     if (cart) {
         cart.items = [];
@@ -62,13 +75,9 @@ export async function POST(req: Request) {
         await cart.save();
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      orderId: newOrder._id 
-    });
+    return NextResponse.json({ success: true, orderId: newOrder._id });
 
   } catch (error: any) {
-    console.error("[POST /api/orders] Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
