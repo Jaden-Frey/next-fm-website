@@ -3,11 +3,16 @@ import { useCart } from '../../context/cartcontext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation'; 
 import { useState } from 'react'; 
+import { useUser, useClerk } from "@clerk/nextjs"; // ADD THIS
 
 export default function CartPage() {
   const { cart, cartTotal, itemCount, loading, removeFromCart, updateQuantity, clearCart } = useCart();
   const router = useRouter(); 
-  const [isCreatingOrder, setIsCreatingOrder] = useState(false); 
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  
+  // ADD THESE
+  const { isSignedIn, user } = useUser();
+  const { openSignUp } = useClerk();
 
   const handleQuantityChange = async (productId: number, newQuantity: number) => {
     if (newQuantity < 1) return;
@@ -21,6 +26,19 @@ export default function CartPage() {
   };
 
   const handleCreateOrder = async () => {
+    // ADD THIS CHECK - Require authentication at checkout
+    if (!isSignedIn) {
+      openSignUp({
+        redirectUrl: '/cart',
+        appearance: {
+          elements: {
+            headerSubtitle: "Create an account to complete your order."
+          }
+        }
+      });
+      return;
+    }
+
     setIsCreatingOrder(true);
     try {
       const formattedItems = cart.map(item => ({
@@ -33,14 +51,14 @@ export default function CartPage() {
 
       const payload = {
         customerDetails: {
-          name: "Guest Customer",
-          email: "guest@example.com",
+          // USE USER DATA from Clerk
+          name: user.fullName || "Valued Customer",
+          email: user.primaryEmailAddress?.emailAddress || "email@example.com",
           address: "Store Pickup / Not Provided",
           city: "N/A",
           postalCode: "0000",
           phone: "0000000000"
         },
-        //Hardcoded details because checkout functionality isn't implemented yet. 
         items: formattedItems,
         totalAmount: cartTotal 
       };
@@ -49,7 +67,7 @@ export default function CartPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-guest-id': localStorage.getItem('guestId') || '',
+          // No need to send x-guest-id anymore - backend will use userId from auth
         },
         body: JSON.stringify(payload),
       });

@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 
-const OrderSchema = new mongoose.Schema(
-  {
-    guestId: { type: String, required: true }, 
+const OrderSchema = new mongoose.Schema({
+    userId: { type: String, index: true },
+    guestId: { type: String }, 
+    
     customerDetails: {
       name: { type: String, required: true },
       email: { type: String, required: true },
@@ -31,6 +32,4 @@ const OrderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Order = mongoose.models.Order || mongoose.model("Order", OrderSchema);
-
-export default Order;
+export default mongoose.models.Order || mongoose.model("Order", OrderSchema);

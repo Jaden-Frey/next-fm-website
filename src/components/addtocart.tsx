@@ -1,120 +1,81 @@
 "use client";
-import React, { useState } from "react";
-import { useCart } from "../context/cartcontext";
-import { Product } from "../app/products/productsdata";
+import React, { useState } from 'react';
+import { useCart } from '../context/cartcontext';
 
-interface AddToCartProps {
-  product: Product;
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+  image: string;
+  description?: string;
 }
 
-export default function AddToCart({ product }: AddToCartProps) {
+export default function AddToCart({ product }: { product: Product }) {
   const { addToCart } = useCart();
-  const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-
-  const handleQuantityChange = (change: number) => {
-    const newQuantity = quantity + change;
-    if (newQuantity >= 1) {
-      setQuantity(newQuantity);
-    }
-  };
+  const [quantity, setQuantity] = useState(1);
 
   const handleAddToCart = async () => {
     setIsAdding(true);
     setMessage(null);
 
     try {
-      const result = await addToCart(product, quantity);
-      
-      if (result.success) {
-        setMessage(`Added ${quantity} item${quantity > 1 ? 's' : ''} to cart`);
-        // Reset quantity after successful add
-        setQuantity(1);
-      } else {
-        setMessage('Failed to add to cart');
-      }
+      // FIX: Just await the function. Do not assign it to a variable.
+      await addToCart(product, quantity);
+
+      // If we reach this line, it was successful
+      setMessage(`Added ${quantity} item${quantity > 1 ? 's' : ''} to cart successfully`);
+      setQuantity(1); 
+
     } catch (error) {
-      setMessage('An error occurred');
+      console.error("Add to cart error:", error);
+      setMessage("Failed to add item to cart");
     } finally {
       setIsAdding(false);
-      // Clear message after 
+      // Clear message after 3 seconds
       setTimeout(() => setMessage(null), 3000);
     }
   };
 
   return (
-    <div className="position-relative">
-      {/* Success/Error Message */}
-      {message && (
-        <div 
-          className="position-absolute start-50 translate-middle-x rounded shadow-sm text-center py-2 px-3"
-          style={{ 
-            zIndex: 1050, 
-            top: '-60px',
-            backgroundColor: message.includes('Failed') ? '#f8d7da' : '#d4edda',
-            color: message.includes('Failed') ? '#721c24' : '#155724',
-            border: message.includes('Failed') ? '1px solid #f5c6cb' : '1px solid #c3e6cb',
-            fontSize: '0.9rem',
-            fontWeight: '500',
-            minWidth: '250px'
-          }}
-        >
-          {message}
-        </div>
-      )}
-
+    <div>
       {/* Quantity Selector */}
       <div className="mb-3">
         <label className="form-label fw-bold">Quantity:</label>
-        <div className="d-flex align-items-center gap-3">
-          <div className="btn-group" role="group">
-            <button 
-              type="button"
-              className="btn btn-outline-secondary"
-              onClick={() => handleQuantityChange(-1)}
-              disabled={quantity <= 1 || isAdding}
-            >
-              <i className="bi bi-dash"></i>
-            </button>
-            <input 
-              type="text" 
-              className="form-control text-center" 
-              value={quantity}
-              readOnly
-              style={{ width: '70px' }}
-            />
-            <button 
-              type="button"
-              className="btn btn-outline-secondary"
-              onClick={() => handleQuantityChange(1)}
-              disabled={isAdding}
-            >
-              <i className="bi bi-plus"></i>
-            </button>
-          </div>
-          <span className="text-muted">/ unit</span>
+        <div className="input-group" style={{ maxWidth: '150px' }}>
+          <button 
+            className="btn btn-outline-secondary" 
+            onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
+          >-</button>
+          <input 
+            type="number" 
+            className="form-control text-center" 
+            value={quantity} 
+            readOnly 
+          />
+          <button 
+            className="btn btn-outline-secondary" 
+            onClick={() => setQuantity(prev => prev + 1)}
+          >+</button>
         </div>
       </div>
 
-      {/* Add to Cart Button */}
+      {/* Add Button */}
       <button 
-        className="btn btn-dark btn-lg w-100"
+        className="btn btn-dark w-100 py-2" 
         onClick={handleAddToCart}
         disabled={isAdding}
       >
-        {isAdding ? (
-          <>
-            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-            Adding...
-          </>
-        ) : (
-          <>
-            <i className="bi bi-cart-plus me-2"></i>
-            Add to Cart • R{(product.price * quantity).toFixed(2)}
-          </>
-        )}
+        {isAdding ? "Adding..." : `Add to Cart • R${(product.price * quantity).toFixed(2)}`}
       </button>
+
+      {/* Success/Error Message */}
+      {message && (
+        <div className={`alert mt-3 ${message.includes("Failed") ? "alert-danger" : "alert-success"}`} role="alert">
+          {message}
+        </div>
+      )}
     </div>
   );
 }

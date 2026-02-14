@@ -2,40 +2,51 @@ import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import Order from "../../../lib/models/order";
 import Cart from "../../../lib/models/cart";
+import { auth } from "@clerk/nextjs/server";
 
 const connectDB = async () => {
-  if (mongoose.connection.readyState === 0) {
-    await mongoose.connect(process.env.MONGODB_URL!, {
-      dbName: 'clerk-db',
-    });
-  }
+  if (mongoose.connection.readyState >= 1) return;
+  await mongoose.connect(process.env.MONGODB_URL!, {
+    dbName: 'clerk-db',
+  });
 };
 
 export async function GET(req: Request) {
   try {
     await connectDB();
+    const { userId } = await auth();
     const guestId = req.headers.get("x-guest-id");
-    if (!guestId) return NextResponse.json({ orders: [] });
 
-    // 1. Fetch all orders sorted by newest first
-    const orders = await Order.find({ guestId }).sort({ createdAt: -1 });
+    // 1. Determine who we are querying for (User or Guest)
+    let query: any = {};
+    if (userId) {
+      query = { userId };
+    } else if (guestId) {
+      query = { guestId };
+    } else {
+      return NextResponse.json({ orders: [] });
+    }
 
-    // If we have multiple orders, ensure only the first one (newest) is 'Pending'and all others are 'Completed'. This fixes old data.
-    
+    // 2. Fetch all orders sorted by newest first
+    const orders = await Order.find(query).sort({ createdAt: -1 });
+
     if (orders.length > 1) {
       const newestOrderId = orders[0]._id;
+      
+      // Update all OTHER orders for this user/guest that are still 'Pending' to 'Completed'
       await Order.updateMany(
-        { guestId, _id: { $ne: newestOrderId }, status: 'Pending' },
+        { ...query, _id: { $ne: newestOrderId }, status: 'Pending' },
         { $set: { status: 'Completed' } }
       );
       
-      // Refresh the list after update to show correct statuses immediately
-      const updatedOrders = await Order.find({ guestId }).sort({ createdAt: -1 });
+      // Return the cleaned-up list
+      const updatedOrders = await Order.find(query).sort({ createdAt: -1 });
       return NextResponse.json({ orders: updatedOrders });
     }
 
     return NextResponse.json({ orders });
   } catch (error: any) {
+    console.error("GET Orders Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -43,32 +54,44 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     await connectDB();
-    
+    const { userId } = await auth();
     const guestId = req.headers.get("x-guest-id");
-    if (!guestId) return NextResponse.json({ error: "Missing Guest ID" }, { status: 400 });
 
-    const { customerDetails, items, totalAmount } = await req.json();
+    // 1. Validate Identity
+    if (!userId && !guestId) {
+      return NextResponse.json({ error: "Missing User or Guest ID" }, { status: 400 });
+    }
+
+    const body = await req.json();
+    const { customerDetails, items, totalAmount } = body;
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: "No items provided" }, { status: 400 });
     }
 
-    // Mark ALL previous pending orders as Completed before creating the new one
+    // 2. Define the Query (Who is placing this order?)
+    const query = userId ? { userId } : { guestId };
+
+    // 3. Mark ALL previous "Pending" orders for this user/guest as "Completed"
     await Order.updateMany(
-      { guestId: guestId, status: 'Pending' },
+      { ...query, status: 'Pending' },
       { $set: { status: 'Completed' } }
     );
 
+    // 4. Create the New Order
     const newOrder = await Order.create({
-      guestId,
+      userId: userId || null,   
+      guestId: guestId || null, 
       items, 
       totalAmount, 
       status: 'Pending', 
       customerDetails: customerDetails || {}, 
+      paymentMethod: body.paymentMethod || "Cash on Delivery",
       createdAt: new Date(),
     });
 
-    const cart = await Cart.findOne({ guestId });
+    // 5. Clear the Cart (for the specific user or guest)
+    const cart = await Cart.findOne(query);
     if (cart) {
         cart.items = [];
         cart.totalAmount = 0;
@@ -78,6 +101,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, orderId: newOrder._id });
 
   } catch (error: any) {
+    console.error("POST Order Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

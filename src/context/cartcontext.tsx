@@ -1,10 +1,18 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Product } from '../app/products/productsdata';
+import { useUser } from "@clerk/nextjs";
 
-interface CartItem extends Product {
+// Define types
+export interface Product {
+  id: number;
+  name: string;
+  price: number;
+  image: string;
+  category?: string;
+}
+
+export interface CartItem extends Product {
   quantity: number;
-  cartItemId?: string;
 }
 
 interface CartContextType {
@@ -12,205 +20,157 @@ interface CartContextType {
   cartTotal: number;
   itemCount: number;
   loading: boolean;
-  addToCart: (product: Product, quantity?: number) => Promise<{ success: boolean; message: string }>;
-  removeFromCart: (productId: number) => Promise<{ success: boolean }>;
-  updateQuantity: (productId: number, quantity: number) => Promise<{ success: boolean }>;
-  clearCart: () => Promise<{ success: boolean }>;
-  refreshCart: () => Promise<void>;
+  addToCart: (product: Product, quantity?: number) => Promise<void>;
+  removeFromCart: (productId: number) => Promise<void>;
+  updateQuantity: (productId: number, quantity: number) => Promise<void>;
+  clearCart: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-// Utility to get or create guest ID
-function getGuestId(): string {
-  if (typeof window === 'undefined') return '';
-  
-  let guestId = localStorage.getItem('guestId');
-  if (!guestId) {
-    guestId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    localStorage.setItem('guestId', guestId);
-    console.log('[Cart] Created new guest ID:', guestId);
-  } else {
-    console.log('[Cart] Using existing guest ID:', guestId);
-  }
-  return guestId;
-}
-
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const { user, isSignedIn, isLoaded } = useUser();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartTotal, setCartTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const guestId = getGuestId();
+  const [guestId, setGuestId] = useState<string | null>(null);
 
-  // Calculate item count
-  const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  // 1. Initialize OR Regenerate Guest ID
+  // This now runs whenever Auth state changes. 
+  // If you sign out, 'isSignedIn' becomes false, and we generate a new ID.
+  useEffect(() => {
+    if (!isLoaded) return;
 
-  // Fetch cart from MongoDB on mount
+    if (!isSignedIn) {
+      // We are a guest. Do we have an ID?
+      let id = localStorage.getItem('guestId');
+      if (!id) {
+        id = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('guestId', id);
+      }
+      setGuestId(id);
+    }
+  }, [isLoaded, isSignedIn]);
+
+  // 2. Merge Logic: Triggered ONLY when User signs in
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      // Check if there was a guest session before this login
+      const pendingGuestId = localStorage.getItem('guestId');
+      
+      if (pendingGuestId) {
+        fetch('/api/cart/merge', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ guestId: pendingGuestId })
+        })
+        .then(() => {
+          // Cleanup guest ID after merge
+          localStorage.removeItem('guestId');
+          setGuestId(null);
+          // Refresh cart to show merged items
+          fetchCart(); 
+        })
+        .catch(err => console.error("Merge failed", err));
+      } else {
+        // Just a normal login, no merge needed, fetch user cart
+        fetchCart();
+      }
+    }
+  }, [isLoaded, isSignedIn]);
+
+  // 3. Fetch Cart
   const fetchCart = async () => {
-    if (!guestId) {
-      setLoading(false);
-      return;
+    if (!isLoaded) return;
+
+    const headers: any = {};
+    
+    // Logic: If signed in, Clerk handles auth. If not, send guestId.
+    if (!isSignedIn) {
+       // If we don't have a guestId yet (react state delay), try getting from local storage or wait
+       const currentGuestId = guestId || localStorage.getItem('guestId');
+       if (!currentGuestId) return; 
+       headers['x-guest-id'] = currentGuestId;
     }
 
     try {
-      console.log('[Cart] Fetching from API with guest ID:', guestId);
-      
-      const response = await fetch('/api/cart', {
-        headers: {
-          'x-guest-id': guestId,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      const res = await fetch('/api/cart', { headers });
+      const data = await res.json();
+      if (data.items) {
+        setCart(data.items);
+        setCartTotal(data.total);
       }
-
-      const data = await response.json();
-      console.log('[Cart] Fetched data:', data);
-      
-      setCart(data.items || []);
-      setCartTotal(data.total || 0);
     } catch (error) {
-      console.error('[Cart] Error fetching cart:', error);
-      setCart([]);
-      setCartTotal(0);
+      console.error("Fetch cart error", error);
     } finally {
       setLoading(false);
     }
   };
 
+  // Re-fetch when specific IDs change
   useEffect(() => {
     fetchCart();
-  }, [guestId]);
+  }, [isSignedIn, guestId, isLoaded]);
 
-  // Add item to cart
-  const addToCart = async (product: Product, quantity: number = 1): Promise<{ success: boolean; message: string }> => {
-    try {
-      console.log('[Cart] Adding product:', product.id, product.name);
-      console.log('[Cart] Quantity:', quantity);
-      console.log('[Cart] Using guest ID:', guestId);
-
-      const response = await fetch('/api/cart', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-guest-id': guestId,
-        },
-        body: JSON.stringify({ 
-          productId: product.id,
-          quantity 
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log('[Cart] Add result:', result);
-
-      // Refresh cart after adding
-      await fetchCart();
-
-      return { 
-        success: true, 
-        message: `Added ${quantity} ${quantity === 1 ? 'item' : 'items'} to cart` 
-      };
-    } catch (error) {
-      console.error('[Cart] Error adding to cart:', error);
-      return { 
-        success: false, 
-        message: 'Failed to add item to cart' 
-      };
+  // 4. Cart Operations
+  const addToCart = async (product: Product, quantity = 1) => {
+    const headers: any = { 'Content-Type': 'application/json' };
+    
+    // Ensure we attach guest ID if not logged in
+    if (!isSignedIn) {
+        const currentGuestId = guestId || localStorage.getItem('guestId');
+        if (currentGuestId) headers['x-guest-id'] = currentGuestId;
     }
+
+    await fetch('/api/cart', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ productId: product.id, quantity })
+    });
+    await fetchCart();
   };
 
-  // Remove item from cart
-  const removeFromCart = async (productId: number): Promise<{ success: boolean }> => {
-    try {
-      console.log('[Cart] Removing product:', productId);
-
-      const response = await fetch(`/api/cart?productId=${productId}`, {
-        method: 'DELETE',
-        headers: {
-          'x-guest-id': guestId,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      // Refresh cart after removing
-      await fetchCart();
-
-      return { success: true };
-    } catch (error) {
-      console.error('[Cart] Error removing from cart:', error);
-      return { success: false };
+  const removeFromCart = async (productId: number) => {
+    const headers: any = {};
+    if (!isSignedIn) {
+        const currentGuestId = guestId || localStorage.getItem('guestId');
+        if (currentGuestId) headers['x-guest-id'] = currentGuestId;
     }
+
+    await fetch(`/api/cart?productId=${productId}`, { method: 'DELETE', headers });
+    await fetchCart();
   };
 
-  // Update item quantity
-  const updateQuantity = async (productId: number, quantity: number): Promise<{ success: boolean }> => {
-    try {
-      console.log('[Cart] Updating quantity for product:', productId, 'to:', quantity);
-
-      const response = await fetch('/api/cart', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-guest-id': guestId,
-        },
-        body: JSON.stringify({ 
-          productId,
-          quantity 
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      // Refresh cart after updating
-      await fetchCart();
-
-      return { success: true };
-    } catch (error) {
-      console.error('[Cart] Error updating quantity:', error);
-      return { success: false };
+  const updateQuantity = async (productId: number, quantity: number) => {
+    const headers: any = { 'Content-Type': 'application/json' };
+    if (!isSignedIn) {
+        const currentGuestId = guestId || localStorage.getItem('guestId');
+        if (currentGuestId) headers['x-guest-id'] = currentGuestId;
     }
+
+    await fetch('/api/cart', {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ productId, quantity })
+    });
+    await fetchCart();
   };
 
-  // Clear entire cart
-  const clearCart = async (): Promise<{ success: boolean }> => {
-    try {
-      console.log('[Cart] Clearing cart');
-      
-      // Remove all items one by one
-      for (const item of cart) {
-        await removeFromCart(item.id);
-      }
-
-      return { success: true };
-    } catch (error) {
-      console.error('[Cart] Error clearing cart:', error);
-      return { success: false };
-    }
+  const clearCart = async () => {
+    setCart([]);
+    setCartTotal(0);
   };
 
   return (
     <CartContext.Provider value={{ 
-      cart,
-      cartTotal,
-      itemCount,
-      loading,
-      addToCart,
-      removeFromCart,
-      updateQuantity,
-      clearCart,
-      refreshCart: fetchCart
+      cart, 
+      cartTotal, 
+      itemCount: cart.reduce((a, b) => a + b.quantity, 0), 
+      loading, 
+      addToCart, 
+      removeFromCart, 
+      updateQuantity, 
+      clearCart 
     }}>
       {children}
     </CartContext.Provider>
@@ -219,8 +179,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
 export function useCart() {
   const context = useContext(CartContext);
-  if (!context) {
-    throw new Error("useCart must be used within CartProvider");
-  }
+  if (!context) throw new Error("useCart must be used within CartProvider");
   return context;
 }

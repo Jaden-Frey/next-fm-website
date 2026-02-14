@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useUser } from '@clerk/nextjs';
 
 interface OrderItem {
   productId: string;
@@ -19,24 +20,36 @@ interface Order {
 }
 
 export default function OrdersPage() {
+  const { isSignedIn, isLoaded } = useUser();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOrders = async () => {
+      if (!isLoaded) return;
+
       const guestId = localStorage.getItem('guestId');
-      if (!guestId) {
+
+      if (!isSignedIn && !guestId) {
         setLoading(false);
         return;
       }
 
       try {
+        const headers: HeadersInit = {};
+        if (guestId) {
+          headers['x-guest-id'] = guestId;
+        }
+
         const res = await fetch('/api/orders', {
-          headers: { 'x-guest-id': guestId },
+          headers: headers,
         });
-        const data = await res.json();
-        if (data.orders) {
-          setOrders(data.orders);
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.orders) {
+            setOrders(data.orders);
+          }
         }
       } catch (error) {
         console.error("Failed to fetch orders:", error);
@@ -46,7 +59,7 @@ export default function OrdersPage() {
     };
 
     fetchOrders();
-  }, []);
+  }, [isLoaded, isSignedIn]);
 
   if (loading) {
     return (
@@ -82,7 +95,6 @@ export default function OrdersPage() {
               return (
                 <div key={order._id} className="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
                   
-                  {/* Header: */}
                   <div className="card-header bg-white border-bottom p-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div className="d-flex flex-column">
                       <span className="text-muted small fw-bold text-uppercase" style={{ fontSize: '0.7rem' }}>Order Placed</span>
@@ -109,7 +121,6 @@ export default function OrdersPage() {
                     </div>
                   </div>
 
-                  {/* Body: */}
                   <div className="card-body p-0">
                     {order.items.map((item, index) => (
                       <div key={index} className="p-3 border-bottom bg-white">
@@ -131,7 +142,6 @@ export default function OrdersPage() {
                     ))}
                   </div>
 
-                  {/* Footer: */}
                   <div className="card-footer bg-light p-3 d-flex justify-content-between align-items-center">
                     <span className="text-muted fw-medium">Total Amount</span>
                     <span className="h5 mb-0 fw-bold text-dark">R{order.totalAmount.toFixed(2)}</span>
