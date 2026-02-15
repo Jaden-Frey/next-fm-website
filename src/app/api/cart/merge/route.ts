@@ -31,11 +31,9 @@ export async function POST(req: Request) {
     let userCart = await Cart.findOne({ userId });
 
     if (userCart) {
-      // 1. SAFETY FIX: Handle empty/undefined arrays to prevent 500 Crash
       const userItems = userCart.items || [];
       const guestItems = guestCart.items || [];
 
-      // 2. TYPESCRIPT FIX: Explicitly type the Map
       const existingItemsMap = new Map<string, any>();
       
       userItems.forEach((item: any) => {
@@ -57,7 +55,6 @@ export async function POST(req: Request) {
         }
       });
 
-      // Recalculate total safely
       userCart.totalAmount = userCart.items.reduce(
         (acc: number, item: any) => acc + (item.price * item.quantity), 
         0
@@ -67,7 +64,6 @@ export async function POST(req: Request) {
       await Cart.findByIdAndDelete(guestCart._id);
 
     } else {
-      // If user has no cart, claim the guest cart
       guestCart.userId = userId;
       guestCart.guestId = undefined;
       await guestCart.save();

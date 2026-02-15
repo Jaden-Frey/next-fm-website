@@ -21,10 +21,8 @@ export default function AddToCart({ product }: { product: Product }) {
     setMessage(null);
 
     try {
-      // FIX: Just await the function. Do not assign it to a variable.
       await addToCart(product, quantity);
 
-      // If we reach this line, it was successful
       setMessage(`Added ${quantity} item${quantity > 1 ? 's' : ''} to cart successfully`);
       setQuantity(1); 
 
@@ -33,7 +31,6 @@ export default function AddToCart({ product }: { product: Product }) {
       setMessage("Failed to add item to cart");
     } finally {
       setIsAdding(false);
-      // Clear message after 3 seconds
       setTimeout(() => setMessage(null), 3000);
     }
   };

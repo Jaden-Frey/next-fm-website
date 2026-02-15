@@ -35,59 +35,54 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [guestId, setGuestId] = useState<string | null>(null);
 
-  // 1. Initialize OR Regenerate Guest ID
-  // This now runs whenever Auth state changes. 
-  // If you sign out, 'isSignedIn' becomes false, and we generate a new ID.
   useEffect(() => {
     if (!isLoaded) return;
 
-    if (!isSignedIn) {
-      // We are a guest. Do we have an ID?
-      let id = localStorage.getItem('guestId');
-      if (!id) {
-        id = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        localStorage.setItem('guestId', id);
-      }
-      setGuestId(id);
-    }
-  }, [isLoaded, isSignedIn]);
-
-  // 2. Merge Logic: Triggered ONLY when User signs in
-  useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      // Check if there was a guest session before this login
-      const pendingGuestId = localStorage.getItem('guestId');
+    const initialize = async () => {
+      // CASE A: User is Signed In
+      if (isSignedIn) {
+        const pendingGuestId = localStorage.getItem('guestId');
+        
+        // If we have a guest ID, MERGE IT FIRST
+        if (pendingGuestId) {
+          try {
+            await fetch('/api/cart/merge', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ guestId: pendingGuestId })
+            });
+            // Clear guest ID after successful merge
+            localStorage.removeItem('guestId');
+            setGuestId(null);
+          } catch (err) {
+            console.error("Merge failed", err);
+          }
+        }
+        // THEN fetch the cart (now containing merged items)
+        await fetchCart();
+      } 
       
-      if (pendingGuestId) {
-        fetch('/api/cart/merge', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ guestId: pendingGuestId })
-        })
-        .then(() => {
-          // Cleanup guest ID after merge
-          localStorage.removeItem('guestId');
-          setGuestId(null);
-          // Refresh cart to show merged items
-          fetchCart(); 
-        })
-        .catch(err => console.error("Merge failed", err));
-      } else {
-        // Just a normal login, no merge needed, fetch user cart
-        fetchCart();
+      // CASE B: User is Guest
+      else {
+        let id = localStorage.getItem('guestId');
+        if (!id) {
+          id = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          localStorage.setItem('guestId', id);
+        }
+        setGuestId(id);
+        await fetchCart();
       }
-    }
+    };
+
+    initialize();
   }, [isLoaded, isSignedIn]);
 
-  // 3. Fetch Cart
+  // 2. Fetch Cart Function
   const fetchCart = async () => {
-    if (!isLoaded) return;
-
     const headers: any = {};
     
     // Logic: If signed in, Clerk handles auth. If not, send guestId.
     if (!isSignedIn) {
-       // If we don't have a guestId yet (react state delay), try getting from local storage or wait
        const currentGuestId = guestId || localStorage.getItem('guestId');
        if (!currentGuestId) return; 
        headers['x-guest-id'] = currentGuestId;
@@ -98,7 +93,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json();
       if (data.items) {
         setCart(data.items);
-        setCartTotal(data.total);
+        setCartTotal(data.totalAmount || data.total || 0);
       }
     } catch (error) {
       console.error("Fetch cart error", error);
@@ -107,16 +102,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Re-fetch when specific IDs change
-  useEffect(() => {
-    fetchCart();
-  }, [isSignedIn, guestId, isLoaded]);
-
-  // 4. Cart Operations
+  // 3. Cart Operations
   const addToCart = async (product: Product, quantity = 1) => {
     const headers: any = { 'Content-Type': 'application/json' };
     
-    // Ensure we attach guest ID if not logged in
     if (!isSignedIn) {
         const currentGuestId = guestId || localStorage.getItem('guestId');
         if (currentGuestId) headers['x-guest-id'] = currentGuestId;
@@ -125,7 +114,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     await fetch('/api/cart', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ productId: product.id, quantity })
+      body: JSON.stringify({ 
+        productId: product.id, 
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        quantity 
+      })
     });
     await fetchCart();
   };
