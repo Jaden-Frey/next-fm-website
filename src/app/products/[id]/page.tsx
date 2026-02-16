@@ -1,19 +1,64 @@
 "use client";
+
 import { useParams } from 'next/navigation';
-import { productsData } from '../productsdata'; 
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import HeartButton from '../../../components/heartbutton'; 
 import AddToCart from '../../../components/addtocart'; 
-import Link from 'next/link';
 
 export default function ProductDetailPage() {
   const params = useParams();
-  const productId = parseInt(params.id as string);
-  const product = productsData.find(p => p.id === productId);
+  const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const id = params.id;
 
-  if (!product) {
+  useEffect(() => {
+    // 1. Define the fetch function
+    const fetchProduct = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/products?id=${id}`);
+        
+        if (!res.ok) {
+           setError("Product not found");
+           setProduct(null);
+        } else {
+           const data = await res.json();
+           setProduct(data);
+           setError(null);
+        }
+      } catch (err) {
+        console.error("Error fetching product:", err);
+        setError("Failed to load product");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // 2. Trigger the fetch if ID exists
+    if (id) {
+        fetchProduct();
+    }
+  }, [id]);
+
+
+  if (loading) {
+    return (
+        <div className="container py-5 text-center" style={{ minHeight: '80vh', marginTop: '40px' }}>
+            <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="mt-3 text-muted">Loading product details...</p>
+        </div>
+    );
+  }
+
+  if (error || !product) {
     return (
       <div className="container py-3 text-center" style={{ marginTop: '40px' }}>
         <h2>Product not found</h2>
+        <p className="text-muted">We couldn't find a product with ID: {id}</p>
         <Link href="/products" className="btn btn-dark mt-3">Back to Products</Link>
       </div>
     );
@@ -29,6 +74,9 @@ export default function ProductDetailPage() {
                src={product.image} 
                alt={product.name}
                className="object-fit-cover w-100 h-100"
+               onError={(e) => {
+                   (e.target as HTMLImageElement).src = '/images/placeholder.png'; // Fallback
+               }}
              />
           </div>
         </div>
@@ -46,17 +94,24 @@ export default function ProductDetailPage() {
             {product.description}
           </p>
 
+          <div className="mb-4">
+            <span className="badge bg-secondary text-capitalize">
+                {product.category || "Uncategorized"}
+            </span>
+          </div>
+
           <hr className="my-4" />
+          
+          {/* Action Buttons */}
           <div className="mb-4">
              <AddToCart product={product} />
           </div>
 
-          {/* Wishlist Button */}
           <div className="d-grid">
              <HeartButton product={product} />
           </div>
 
-          {/* Features */}
+          {/* Features Static Block */}
           <div className="mt-4 p-3 bg-light rounded">
             <h6 className="fw-bold">Product Features</h6>
             <ul className="mb-0 text-muted small ps-3">
