@@ -41,7 +41,7 @@ export async function removeRole(formData: FormData) {
     await client.users.updateUser(id, {
       publicMetadata: { role: null },
     });
-    revalidatePath("/admin"); // Revalidate the admin page to reflect changes
+    revalidatePath("/admin"); 
   } catch {
     throw new Error("Failed to remove role");
   }
