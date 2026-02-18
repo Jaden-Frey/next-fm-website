@@ -19,14 +19,12 @@ const Navbar = () => {
         <ul className="navbar-nav d-flex flex-row gap-4 align-items-center flex-wrap justify-content-center">
           
           {/* --- PUBLIC LINKS --- */}
-          {!isAdmin && (
             <li className="nav-item">
               <Link href="/" className="nav-link">
                 <i className="bi bi-house-door me-2"></i>
                 Home
               </Link>
             </li>
-          )}
           
           <li className="nav-item">
             <Link href="/products" className="nav-link">
@@ -87,7 +85,7 @@ const Navbar = () => {
               <li className="nav-item">
                 <Link href="/admin/dashboards" className="nav-link">
                   <i className="bi bi-speedometer2 me-2"></i>
-                  Dashboard Overview
+                  Admin Dashboards
                 </Link>
               </li>
             </>

@@ -9,7 +9,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { isLoaded } = useUser();
 
   const navLinks = [
-    { href: '/admin/reports', icon: 'bi-bar-chart-line', label: 'Reports' },
+    { href: '/admin/reports', icon: 'bi-bar-chart-line', label: 'Report Summary' },
   ];
 
   return (

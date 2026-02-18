@@ -12,9 +12,7 @@ const connectDB = async () => {
       if (currentDb === DESIRED_DB) return;
       await mongoose.disconnect();
     }
-    await mongoose.connect(process.env.MONGODB_URL!, {
-      dbName: DESIRED_DB,
-    });
+    await mongoose.connect(process.env.MONGODB_URL!, { dbName: DESIRED_DB });
   } catch (err) {
     console.error("connectDB error:", err);
     throw err;
@@ -32,15 +30,21 @@ const isValidObjectId = (id?: string) => {
 export async function GET(req: Request) {
   try {
     await connectDB();
+
+    // Check role so cost is only returned to admins
+    const { sessionClaims } = await auth();
+    const isAdmin = sessionClaims?.metadata?.role === "admin";
+    const costProjection: any = isAdmin ? {} : { cost: 0 };
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
     if (id) {
       let product = null;
       if (isValidObjectId(id)) {
-        product = await Product.findById(id);
+        product = await Product.findById(id).select(costProjection);
       } else {
-        product = await Product.findOne({ id: Number(id) });
+        product = await Product.findOne({ id: Number(id) }).select(costProjection);
       }
 
       if (!product) {
@@ -50,7 +54,7 @@ export async function GET(req: Request) {
       return NextResponse.json(product);
     }
 
-    const products = await Product.find({}).sort({ createdAt: -1 });
+    const products = await Product.find({}).select(costProjection).sort({ createdAt: -1 });
     return NextResponse.json(products);
   } catch (error: any) {
     console.error("GET Error:", error);
@@ -61,7 +65,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     await connectDB();
-    const { userId } = await auth();
+    const { userId } = await auth(); 
     const body = await req.json();
 
     const lastProduct = await Product.findOne().sort({ id: -1 });

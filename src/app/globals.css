@@ -149,21 +149,19 @@ header a:hover i {
 
 /* 6. Hero Section */
 .hero-static {
-  background-image: url('https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=2069&auto=format&fit=crop');
+  background-image: url('/images/butchery-bg.png');; 
   background-size: cover;
   background-position: center;
-  background-attachment: fixed;
-  height: 85vh;
-  min-height: 600px;
+  background-repeat: no-repeat;
+  min-height: 60vh; 
   display: flex;
   align-items: center;
-  position: relative;
 }
 
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 100%);
+  background: linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 100%);
   z-index: 1;
 }
 
