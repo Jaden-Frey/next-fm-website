@@ -1,3 +1,4 @@
+// app/api/admin/dashboard/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { auth } from "@clerk/nextjs/server";
@@ -8,6 +9,7 @@ const userSchema    = new mongoose.Schema({}, { strict: false });
 
 const Order   = mongoose.models.Order   || mongoose.model("Order",   orderSchema);
 const Product = mongoose.models.Product || mongoose.model("Product", productSchema);
+// Assumes User documents have a createdAt field (synced via Clerk webhook)
 const User    = mongoose.models.User    || mongoose.model("User",    userSchema);
 
 const connectDB = async () => {
@@ -27,6 +29,7 @@ function getRangeFrom(range: Range): Date {
 }
 
 function bucketKey(date: Date, range: Range): string {
+  // Wide ranges use monthly buckets; short ranges use daily buckets
   const wide = range === "90d" || range === "all";
   return wide
     ? date.toLocaleString("default", { month: "short", year: "2-digit" })
@@ -56,7 +59,8 @@ export async function GET(req: NextRequest) {
     }, {});
 
     const hasCostData = (products as any[]).some(p => p.cost != null && p.cost > 0);
-    const customerMap:   Record<string, { name: string; email: string; city: string; totalSpent: number; orderCount: number; firstOrder: Date; lastOrder: Date }> = {};
+
+        const customerMap:   Record<string, { name: string; email: string; city: string; totalSpent: number; orderCount: number; firstOrder: Date; lastOrder: Date }> = {};
     const productStats:  Record<string, { id: number; name: string; category: string; price: number; qtySold: number; revenue: number; orderCount: number }> = {};
     const categoryStats: Record<string, { revenue: number; qtySold: number }> = {};
     const statusStats:   Record<string, number> = {};
@@ -97,7 +101,7 @@ export async function GET(req: NextRequest) {
       const orderTotal = order.totalAmount || 0;
       const date       = new Date(order.createdAt);
 
-      statusStats[status] = (statusStats[status] || 0) + 1;
+            statusStats[status] = (statusStats[status] || 0) + 1;
 
       if (status === "Cancelled") { cancelledCount++; continue; }
 
@@ -205,6 +209,7 @@ export async function GET(req: NextRequest) {
 
     const newCustomersInRange       = allCustomers.filter(c => new Date(c.firstOrder) >= from).length;
     const returningCustomersInRange = allCustomers.filter(c => new Date(c.firstOrder) < from && new Date(c.lastOrder) >= from).length;
+
     const cityAccumulator = allCustomers.reduce<Record<string, { count: number; revenue: number }>>((acc, c) => {
       const k = (!c.city || c.city === "N/A" || c.city === "n/a") ? "Unspecified" : c.city;
       if (!acc[k]) acc[k] = { count: 0, revenue: 0 };
@@ -252,15 +257,13 @@ export async function GET(req: NextRequest) {
       },
 
       customers: {
-        summary: { totalCustomers: allCustomers.length, totalRegisteredUsers: users.length, avgLifetimeValue: allCustomers.length > 0 ? totalRevenue / allCustomers.length : 0, newCustomersInRange, returningCustomersInRange },
+        summary: { totalCustomers: allCustomers.length, totalRegisteredUsers: users.length, avgCustomerSpend: allCustomers.length > 0 ? totalRevenue / allCustomers.length : 0, newCustomersInRange, returningCustomersInRange },
         topCustomers,
-        signupTrend:       Object.entries(signupMap).map(([label, count]) => ({ label, count })),
-        cityBreakdown:     Object.entries(cityAccumulator)
-          .map(([city, d]) => ({ city, count: d.count, revenue: d.revenue }))
-          .sort((a, b) => b.revenue - a.revenue)
-          .slice(0, 10),
-        frequencySegments: Object.entries(freqSegs).map(([label, count]) => ({ label, count })),
-        avgSpendBySegment: Object.entries(avgSpendBySeg).map(([label, avg]) => ({ label, avg })),
+        signupTrend:          Object.entries(signupMap).map(([label, count]) => ({ label, count })),
+        orderStatusBreakdown: Object.entries(statusStats).map(([status, count]) => ({ status, count })),
+        paymentBreakdown:     Object.entries(paymentStats).map(([method, count]) => ({ method, count })),
+        frequencySegments:    Object.entries(freqSegs).map(([label, count]) => ({ label, count })),
+        avgSpendBySegment:    Object.entries(avgSpendBySeg).map(([label, avg]) => ({ label, avg })),
       },
     });
 

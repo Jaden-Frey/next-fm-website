@@ -37,6 +37,7 @@ const tip = {
   backgroundColor: T.text, titleColor: '#f1f5f9', bodyColor: '#94a3b8',
   padding: 12, cornerRadius: 8, borderColor: T.border, borderWidth: 1, boxPadding: 4,
 };
+
 const xAxis = { grid: { display: false }, border: { display: false }, ticks: { color: T.muted, font: { size: 11 } } };
 const yAxis = { grid: { color: '#f1f5f9' }, border: { display: false }, ticks: { color: T.muted, font: { size: 11 } } };
 
@@ -53,21 +54,34 @@ const barOpts: any = {
 };
 const hBarOpts: any = {
   ...barOpts, indexAxis: 'y' as const,
-  scales: { x: { ...xAxis, ticks: { ...xAxis.ticks, callback: formatRc } }, y: { ...yAxis, grid: { display: false } } },
+  scales: {
+    x: { ...xAxis, ticks: { ...xAxis.ticks, callback: formatRc } },
+    y: { ...yAxis, grid: { display: false } },
+  },
 };
+
 const countBarOpts: any = {
-  ...barOpts,
-  scales: { x: xAxis, y: { ...yAxis, beginAtZero: true, ticks: { ...yAxis.ticks } } },
-};
-const arcOpts: any = {
   responsive: true, maintainAspectRatio: false,
-  cutout: '65%',
+  plugins: { legend: { display: false }, tooltip: tip },
+  scales: {
+    x: xAxis,
+    y: { ...yAxis, beginAtZero: true, ticks: { ...yAxis.ticks, stepSize: 1, precision: 0 } },
+  },
+};
+const countLineOpts: any = {
+  ...lineOpts,
+  plugins: { ...lineOpts.plugins, legend: { display: false } },
+  scales: {
+    x: xAxis,
+    y: { ...yAxis, beginAtZero: true, ticks: { ...yAxis.ticks, stepSize: 1, precision: 0 } },
+  },
+};
+
+const arcOpts: any = {
+  responsive: true, maintainAspectRatio: false, cutout: '65%',
   plugins: { legend: { position: 'bottom', labels: { color: T.muted, boxWidth: 10, padding: 14, font: { size: 12 } } }, tooltip: tip },
 };
-const pieOpts: any = {
-  ...arcOpts,
-  cutout: '60%',
-};
+const pieOpts: any = { ...arcOpts, cutout: '60%' };
 
 function Empty() {
   return (
@@ -80,15 +94,9 @@ function Empty() {
   );
 }
 
-function Card({
-  title, badge, badgeColor, headerRight, children, bodyHeight = 280,
-}: {
-  title: React.ReactNode;
-  badge?: string;
-  badgeColor?: string;
-  headerRight?: React.ReactNode;
-  children: React.ReactNode;
-  bodyHeight?: number | string;
+function Card({ title, badge, badgeColor, headerRight, children, bodyHeight = 280 }: {
+  title: React.ReactNode; badge?: string; badgeColor?: string;
+  headerRight?: React.ReactNode; children: React.ReactNode; bodyHeight?: number | string;
 }) {
   const bc = badgeColor ?? T.blue;
   return (
@@ -131,8 +139,6 @@ function Grid({ cols, children, gap = 16, className }: {
   );
 }
 
-// ─── Main page
-
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [range,     setRange]     = useState<Range>('30d');
@@ -169,12 +175,15 @@ export default function DashboardPage() {
   const hcd = data?.meta?.hasCostData;
 
   const topList = pView === 'revenue' ? prd?.topByRevenue : prd?.topByQty;
+
   const productToggle = (
     <div className="db-tog">
       <button className={pView === 'revenue' ? 'on' : ''} onClick={() => setPView('revenue')}>Revenue</button>
       <button className={pView === 'qty'     ? 'on' : ''} onClick={() => setPView('qty')}>Units</button>
     </div>
   );
+
+
 
   return (
     <>
@@ -207,13 +216,11 @@ export default function DashboardPage() {
 
       <div className="db-wrap">
 
-        {/* Header */}
         <div style={{ marginBottom: 24 }}>
           <div style={{ fontSize: '0.7rem', color: T.muted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 2 }}>Admin</div>
           <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>Dashboard</h1>
         </div>
 
-        {/* Tab bar + range */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
           <div style={{ display: 'flex', gap: 4, background: '#f1f5f9', padding: 4, borderRadius: 11 }}>
             {TABS.map(t => (
@@ -233,21 +240,19 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Loading */}
         {loading && (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 320 }}>
             <div className="spinner-border" style={{ color: T.blue }} role="status" />
           </div>
         )}
 
-        {/* ── OVERVIEW */}
         {!loading && activeTab === 'overview' && ov && (
           <>
             <Grid cols="repeat(4,1fr)" gap={16} className="r-g4">
-              <KpiCard label="Total Revenue"   value={formatR(ov.kpis.totalRevenue)}  sub={`${ov.kpis.totalOrders} total orders`} accent={T.blue}   />
+              <KpiCard label="Total Revenue"   value={formatR(ov.kpis.totalRevenue)}  sub={`${ov.kpis.totalOrders} total orders`} accent={T.blue}  />
               <KpiCard label="Avg Order Value" value={formatR(ov.kpis.avgOrderValue)} accent={T.green}  />
-              <KpiCard label="Pending Orders"  value={ov.kpis.pendingOrders}          sub="Pending + Processing"                  accent={T.amber}  />
-              <KpiCard label="Total Volume"    value={ov.kpis.totalOrders}            sub="all-time orders"                       accent={T.text}   />
+              <KpiCard label="Pending Orders"  value={ov.kpis.pendingOrders}          sub="Needs attention"                       accent={T.amber} />
+              <KpiCard label="Total Orders"    value={ov.kpis.totalOrders}            sub="all-time"                              accent={T.text}  />
             </Grid>
             <Grid cols="1fr 1fr" gap={20} className="r-g2">
               <Card title="Top Selling Products" badge="By Units" badgeColor={T.blue} bodyHeight={320}>
@@ -263,8 +268,7 @@ export default function DashboardPage() {
                               <td style={{ textAlign: 'right', fontWeight: 600 }}>{formatR(p.revenue)}</td>
                             </tr>
                           ))
-                        : <tr><td colSpan={3} style={{ textAlign: 'center', padding: 24, color: T.muted }}>No data</td></tr>
-                      }
+                        : <tr><td colSpan={3} style={{ textAlign: 'center', padding: 24, color: T.muted }}>No data</td></tr>}
                     </tbody>
                   </table>
                 </div>
@@ -282,8 +286,7 @@ export default function DashboardPage() {
                               <td style={{ textAlign: 'right', fontWeight: 700, color: T.green }}>{formatR(c.totalSpent)}</td>
                             </tr>
                           ))
-                        : <tr><td colSpan={3} style={{ textAlign: 'center', padding: 24, color: T.muted }}>No data</td></tr>
-                      }
+                        : <tr><td colSpan={3} style={{ textAlign: 'center', padding: 24, color: T.muted }}>No data</td></tr>}
                     </tbody>
                   </table>
                 </div>
@@ -292,7 +295,6 @@ export default function DashboardPage() {
           </>
         )}
 
-        {/* ── FINANCIAL */}
         {!loading && activeTab === 'financial' && fin && (
           <>
             {!hcd && (
@@ -301,11 +303,12 @@ export default function DashboardPage() {
               </div>
             )}
             <Grid cols="repeat(4,1fr)" gap={16} className="r-g4">
-              <KpiCard label="Total Revenue"   value={formatR(fin.summary.totalRevenue)}   sub={`${fin.summary.totalOrders} orders`}  accent={T.blue}   />
-              <KpiCard label="Avg Order Value" value={formatR(fin.summary.avgOrderValue)}   accent={T.green}  />
-              <KpiCard label="Gross Profit"    value={hcd && fin.summary.grossProfit != null ? formatR(fin.summary.grossProfit) : 'Add cost data'} accent={T.purple} />
-              <KpiCard label="Gross Margin"    value={hcd && fin.summary.grossMargin != null ? `${fin.summary.grossMargin}%` : '—'} sub={hcd && fin.summary.grossMargin != null ? (fin.summary.grossMargin > 40 ? '✓ Healthy' : '↓ Below 40%') : undefined} accent={T.teal} />
+              <KpiCard label="Total Revenue"    value={formatR(fin.summary.totalRevenue)}  sub={`${fin.summary.totalOrders} orders`} accent={T.blue}   />
+              <KpiCard label="Avg Order Value"  value={formatR(fin.summary.avgOrderValue)} accent={T.green}  />
+              <KpiCard label="Gross Profit"     value={hcd && fin.summary.grossProfit != null ? formatR(fin.summary.grossProfit) : 'Add cost data'} accent={T.purple} />
+              <KpiCard label="Gross Margin"     value={hcd && fin.summary.grossMargin != null ? `${fin.summary.grossMargin}%` : '—'} sub={hcd && fin.summary.grossMargin != null ? (fin.summary.grossMargin > 40 ? '✓ Healthy' : '↓ Below 40%') : undefined} accent={T.teal} />
             </Grid>
+
             <div style={{ marginBottom: 20 }}>
               <Card title={`Revenue${hcd ? ' · COGS · Gross Profit' : ''} Trend`} badge="Line" badgeColor={T.blue} bodyHeight={280}>
                 {fin.trend?.length
@@ -322,11 +325,28 @@ export default function DashboardPage() {
                   : <Empty />}
               </Card>
             </div>
-            <Grid cols="1.6fr 1fr" gap={20} className="r-g2a">
-              <Card title="Revenue by Payment Method" badge="Doughnut" badgeColor={T.sky} bodyHeight={280}>
+
+            <Grid cols="1fr 1fr" gap={20} className="r-g2a">
+              {/* Orders over time — integer axis, always meaningful */}
+              <Card title="Orders Over Time" badge="Count" badgeColor={T.green} bodyHeight={260}>
+                {fin.trend?.length
+                  ? <Line data={{
+                      labels: fin.trend.map((t: any) => t.label),
+                      datasets: [{
+                        label: 'Orders',
+                        data:  fin.trend.map((t: any) => t.orders),
+                        borderColor: T.green, backgroundColor: `${T.green}18`,
+                        fill: true, tension: 0.4, pointRadius: 3, borderWidth: 2.5,
+                      }],
+                    }} options={countLineOpts} />
+                  : <Empty />}
+              </Card>
+
+              {/* Revenue by payment method */}
+              <Card title="Revenue by Payment Method" badge="Doughnut" badgeColor={T.sky} bodyHeight={260}>
                 {fin.paymentRevenue?.length
                   ? <div style={{ display: 'flex', justifyContent: 'center', height: '100%' }}>
-                      <div style={{ width: '100%', maxWidth: 280, height: 260 }}>
+                      <div style={{ width: '100%', maxWidth: 260, height: 240 }}>
                         <Doughnut
                           data={{ labels: fin.paymentRevenue.map((p: any) => p.method), datasets: [{ data: fin.paymentRevenue.map((p: any) => p.revenue), backgroundColor: MULTI, borderWidth: 2, borderColor: T.surface, hoverOffset: 8 }] }}
                           options={arcOpts}
@@ -335,24 +355,28 @@ export default function DashboardPage() {
                     </div>
                   : <Empty />}
               </Card>
-              <Card title="Order Value Distribution" badge="Bar" badgeColor={T.purple} bodyHeight={280}>
-                {fin.orderValueDist?.some((d: any) => d.count > 0)
-                  ? <Bar data={{ labels: fin.orderValueDist.map((d: any) => d.label), datasets: [{ label: 'Orders', data: fin.orderValueDist.map((d: any) => d.count), backgroundColor: `${T.purple}99`, hoverBackgroundColor: T.purple, borderRadius: 6, borderWidth: 0 }] }} options={countBarOpts} />
-                  : <Empty />}
-              </Card>
             </Grid>
+
+            <Card title="Order Value Distribution" badge="How many orders fall into each value bracket" badgeColor={T.purple} bodyHeight={260}>
+              {fin.orderValueDist?.some((d: any) => d.count > 0)
+                ? <Bar
+                    data={{ labels: fin.orderValueDist.map((d: any) => d.label), datasets: [{ label: 'Orders', data: fin.orderValueDist.map((d: any) => d.count), backgroundColor: MULTI.map(c => `${c}99`), hoverBackgroundColor: MULTI, borderRadius: 6, borderWidth: 0 }] }}
+                    options={countBarOpts}
+                  />
+                : <Empty />}
+            </Card>
           </>
         )}
 
-        {/* ── PRODUCTS */}
         {!loading && activeTab === 'products' && prd && (
           <>
             <Grid cols="repeat(4,1fr)" gap={16} className="r-g4">
-              <KpiCard label="Total Products"  value={prd.summary.totalProducts}           sub="in catalogue"    accent={T.orange} />
-              <KpiCard label="Categories"      value={prd.summary.totalCategories}         sub="active"          accent={T.green}  />
-              <KpiCard label="Top Product"     value={prd.summary.topProduct   ?? '—'}     sub="by units sold"   accent={T.blue}   wide />
-              <KpiCard label="Top Category"    value={prd.summary.topCategory  ?? '—'}     sub="by revenue"      accent={T.purple} wide />
+              <KpiCard label="Total Products"  value={prd.summary.totalProducts}        sub="in catalogue"  accent={T.orange} />
+              <KpiCard label="Categories"      value={prd.summary.totalCategories}      sub="active"        accent={T.green}  />
+              <KpiCard label="Top Product"     value={prd.summary.topProduct  ?? '—'}   sub="by units sold" accent={T.blue}   wide />
+              <KpiCard label="Top Category"    value={prd.summary.topCategory ?? '—'}   sub="by revenue"    accent={T.purple} wide />
             </Grid>
+
             <div style={{ marginBottom: 20 }}>
               <Card title="Top Products" headerRight={productToggle} bodyHeight={360}>
                 {topList?.length
@@ -360,18 +384,19 @@ export default function DashboardPage() {
                       data={{
                         labels:   topList.map((p: any) => p.name.length > 22 ? p.name.slice(0, 22) + '…' : p.name),
                         datasets: [{
-                          label:               pView === 'revenue' ? 'Revenue' : 'Units Sold',
-                          data:                topList.map((p: any) => pView === 'revenue' ? p.revenue : p.qtySold),
-                          backgroundColor:     MULTI.map(c => `${c}cc`),
+                          label:                pView === 'revenue' ? 'Revenue' : 'Units Sold',
+                          data:                 topList.map((p: any) => pView === 'revenue' ? p.revenue : p.qtySold),
+                          backgroundColor:      MULTI.map(c => `${c}cc`),
                           hoverBackgroundColor: MULTI,
                           borderRadius: 6, borderWidth: 0,
                         }],
                       }}
-                      options={hBarOpts}
+                      options={pView === 'revenue' ? hBarOpts : { ...hBarOpts, scales: { ...hBarOpts.scales, x: { ...xAxis, ticks: { ...xAxis.ticks, stepSize: 1, precision: 0 } } } }}
                     />
                   : <Empty />}
               </Card>
             </div>
+
             <Grid cols="1fr 1fr" gap={20} className="r-g2b">
               <Card title="Revenue by Category" badge="Doughnut" badgeColor={T.orange} bodyHeight={300}>
                 {prd.categoryPerformance?.length
@@ -385,6 +410,7 @@ export default function DashboardPage() {
                     </div>
                   : <Empty />}
               </Card>
+
               <Card title="Category Performance" bodyHeight={300}>
                 <div style={{ overflowY: 'auto', height: '100%' }}>
                   <table className="db-table">
@@ -408,49 +434,138 @@ export default function DashboardPage() {
                 </div>
               </Card>
             </Grid>
-            <Card title="Sales by Price Band" badge="Bar" badgeColor={T.sky} bodyHeight={220}>
-              {prd.priceBandSales?.some((b: any) => b.qty > 0)
-                ? <Bar data={{ labels: prd.priceBandSales.map((b: any) => b.label), datasets: [{ label: 'Units Sold', data: prd.priceBandSales.map((b: any) => b.qty), backgroundColor: `${T.sky}99`, hoverBackgroundColor: T.sky, borderRadius: 6, borderWidth: 0 }] }} options={countBarOpts} />
-                : <Empty />}
+
+            <Card title="Product Detail Breakdown" bodyHeight="auto">
+              <div style={{ overflowX: 'auto' }}>
+                <table className="db-table">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th>Category</th>
+                      <th style={{ textAlign: 'right' }}>Unit Price</th>
+                      <th style={{ textAlign: 'center' }}>Units Sold</th>
+                      <th style={{ textAlign: 'right' }}>Revenue</th>
+                      <th style={{ textAlign: 'center' }}>Orders</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {prd.topByRevenue?.length
+                      ? prd.topByRevenue.map((p: any, i: number) => (
+                          <tr key={i}>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div style={{ width: 8, height: 8, borderRadius: '50%', background: MULTI[i % MULTI.length], flexShrink: 0 }} />
+                                <span style={{ fontWeight: 500 }}>{p.name}</span>
+                              </div>
+                            </td>
+                            <td style={{ color: T.muted, fontSize: '0.875rem' }}>{p.category}</td>
+                            <td style={{ textAlign: 'right' }}>{formatR(p.price)}</td>
+                            <td style={{ textAlign: 'center', fontWeight: 600 }}>{p.qtySold}</td>
+                            <td style={{ textAlign: 'right', fontWeight: 700, color: T.green }}>{formatR(p.revenue)}</td>
+                            <td style={{ textAlign: 'center', color: T.muted }}>{p.orderCount}</td>
+                          </tr>
+                        ))
+                      : <tr><td colSpan={6} style={{ textAlign: 'center', padding: 24, color: T.muted }}>No data</td></tr>}
+                  </tbody>
+                </table>
+              </div>
             </Card>
           </>
         )}
 
-        {/* ── CUSTOMERS */}
         {!loading && activeTab === 'customers' && cst && (
           <>
             <Grid cols="repeat(4,1fr)" gap={16} className="r-g4">
-              <KpiCard label="Total Customers"     value={cst.summary.totalCustomers}            sub={`${cst.summary.totalRegisteredUsers} registered`} accent={T.purple} />
-              <KpiCard label="Avg Lifetime Value"  value={formatR(cst.summary.avgLifetimeValue)} sub="per ordering customer"                            accent={T.green}  />
-              <KpiCard label="New This Period"     value={cst.summary.newCustomersInRange}       sub="first-time buyers"                                accent={T.sky}    />
-              <KpiCard label="Returning"           value={cst.summary.returningCustomersInRange} sub="repeat buyers in period"                          accent={T.amber}  />
+              <KpiCard label="Total Customers"    value={cst.summary.totalCustomers}            sub={`${cst.summary.totalRegisteredUsers} registered`} accent={T.purple} />
+              <KpiCard label="Avg Customer Spend" value={formatR(cst.summary.avgCustomerSpend)} sub="avg total per buyer"                            accent={T.green}  />
+              <KpiCard label="New This Period"    value={cst.summary.newCustomersInRange}       sub="first-time buyers"                                accent={T.sky}    />
+              <KpiCard label="Returning"          value={cst.summary.returningCustomersInRange} sub="repeat buyers"                                    accent={T.amber}  />
             </Grid>
+
             <Grid cols="1fr 1fr" gap={20} className="r-g2c">
-              <Card title="New Customer Signups" badge="Area" badgeColor={T.purple} bodyHeight={240}>
+              <Card title="New Customer Signups" badge="Over Time" badgeColor={T.purple} bodyHeight={260}>
                 {cst.signupTrend?.length
-                  ? <Line data={{ labels: cst.signupTrend.map((s: any) => s.label), datasets: [{ label: 'Signups', data: cst.signupTrend.map((s: any) => s.count), borderColor: T.purple, backgroundColor: `${T.purple}18`, fill: true, tension: 0.4, pointRadius: 3, borderWidth: 2.5 }] }} options={{ ...lineOpts, plugins: { ...lineOpts.plugins, legend: { display: false } }, scales: { x: xAxis, y: { ...yAxis, beginAtZero: true, ticks: { ...yAxis.ticks } } } }} />
+                  ? <Line data={{
+                      labels: cst.signupTrend.map((s: any) => s.label),
+                      datasets: [{
+                        label: 'Signups',
+                        data:  cst.signupTrend.map((s: any) => s.count),
+                        borderColor: T.purple, backgroundColor: `${T.purple}18`,
+                        fill: true, tension: 0.4, pointRadius: 3, borderWidth: 2.5,
+                      }],
+                    }} options={countLineOpts} />
                   : <Empty />}
               </Card>
-              <Card title="Revenue by City" badge="Bar" badgeColor={T.sky} bodyHeight={240}>
-                {cst.cityBreakdown?.length
-                  ? <Bar data={{ labels: cst.cityBreakdown.map((c: any) => c.city), datasets: [{ label: 'Revenue', data: cst.cityBreakdown.map((c: any) => c.revenue), backgroundColor: `${T.sky}99`, hoverBackgroundColor: T.sky, borderRadius: 6, borderWidth: 0 }] }} options={hBarOpts} />
+
+              <Card title="Orders by Payment Method" badge="How customers pay" badgeColor={T.sky} bodyHeight={260}>
+                {cst.paymentBreakdown?.length
+                  ? <Bar data={{
+                      labels:   cst.paymentBreakdown.map((p: any) => p.method),
+                      datasets: [{
+                        label: 'Orders',
+                        data:  cst.paymentBreakdown.map((p: any) => p.count),
+                        backgroundColor: [T.sky, T.purple, T.teal].map(c => `${c}99`),
+                        hoverBackgroundColor: [T.sky, T.purple, T.teal],
+                        borderRadius: 8, borderWidth: 0,
+                      }],
+                    }} options={countBarOpts} />
                   : <Empty />}
               </Card>
             </Grid>
-            <Grid cols="1fr 1fr" gap={20} className="r-g2c">
-              <Card title="Purchase Frequency Segments" badge="Loyalty" badgeColor={T.purple} bodyHeight={240}>
-                {cst.frequencySegments?.some((s: any) => s.count > 0)
-                  ? <Bar data={{ labels: cst.frequencySegments.map((s: any) => s.label), datasets: [{ label: 'Customers', data: cst.frequencySegments.map((s: any) => s.count), backgroundColor: [T.muted, T.sky, T.purple, T.green].map(c => `${c}99`), hoverBackgroundColor: [T.muted, T.sky, T.purple, T.green], borderRadius: 6, borderWidth: 0 }] }} options={countBarOpts} />
+
+            <Grid cols="1fr 1.6fr" gap={20} className="r-g2c">
+              <Card title="Orders by Status" badge="All Time" badgeColor={T.orange} bodyHeight={280}>
+                {cst.orderStatusBreakdown?.length
+                  ? <div style={{ display: 'flex', justifyContent: 'center', height: '100%' }}>
+                      <div style={{ width: '100%', maxWidth: 260, height: 260 }}>
+                        <Doughnut
+                          data={{
+                            labels:   cst.orderStatusBreakdown.map((s: any) => s.status),
+                            datasets: [{
+                              data:            cst.orderStatusBreakdown.map((s: any) => s.count),
+                              backgroundColor: [T.green, T.sky, T.amber, T.red, T.purple],
+                              borderWidth: 2, borderColor: T.surface, hoverOffset: 8,
+                            }],
+                          }}
+                          options={arcOpts}
+                        />
+                      </div>
+                    </div>
                   : <Empty />}
               </Card>
-              <Card title="Avg Spend by Loyalty Tier" badge="Bar" badgeColor={T.green} bodyHeight={240}>
-                {cst.avgSpendBySegment?.some((s: any) => s.avg > 0)
-                  ? <Bar data={{ labels: cst.avgSpendBySegment.map((s: any) => s.label), datasets: [{ label: 'Avg Spend', data: cst.avgSpendBySegment.map((s: any) => s.avg), backgroundColor: [T.muted, T.sky, T.purple, T.green].map(c => `${c}99`), hoverBackgroundColor: [T.muted, T.sky, T.purple, T.green], borderRadius: 6, borderWidth: 0 }] }} options={barOpts} />
-                  : <Empty />}
+
+              <Card title="Customer Overview" badge="Quick Stats" badgeColor={T.green} bodyHeight={280}>
+                <div style={{ overflowY: 'auto', height: '100%' }}>
+                  <table className="db-table">
+                    <thead><tr><th>Customer</th><th style={{ textAlign: 'center' }}>Orders</th><th style={{ textAlign: 'right' }}>Total Spent</th><th style={{ textAlign: 'center' }}>Last Order</th></tr></thead>
+                    <tbody>
+                      {cst.topCustomers?.slice(0, 6).length
+                        ? cst.topCustomers.slice(0, 6).map((c: any, i: number) => {
+                            const av = [T.purple, T.green, T.sky, T.amber, T.red];
+                            const initials = c.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+                            return (
+                              <tr key={i}>
+                                <td>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <div className="db-avatar" style={{ background: av[i % av.length] }}>{initials}</div>
+                                    <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{c.name}</div>
+                                  </div>
+                                </td>
+                                <td style={{ textAlign: 'center' }}>{c.orderCount}</td>
+                                <td style={{ textAlign: 'right', fontWeight: 700, color: T.purple }}>{formatR(c.totalSpent)}</td>
+                                <td style={{ textAlign: 'center', fontSize: '0.8rem', color: T.muted }}>{c.daysSinceLast === 0 ? 'Today' : `${c.daysSinceLast}d ago`}</td>
+                              </tr>
+                            );
+                          })
+                        : <tr><td colSpan={4} style={{ textAlign: 'center', padding: 24, color: T.muted }}>No data</td></tr>}
+                    </tbody>
+                  </table>
+                </div>
               </Card>
             </Grid>
+
             <div style={{ marginBottom: 20 }}>
-              <Card title="Top Customers" bodyHeight="auto">
+              <Card title="Top Customers by Total Spend" bodyHeight="auto">
                 <div style={{ overflowX: 'auto' }}>
                   <table className="db-table">
                     <thead>
@@ -458,7 +573,7 @@ export default function DashboardPage() {
                         <th>Customer</th><th>City</th>
                         <th style={{ textAlign: 'center' }}>Orders</th>
                         <th style={{ textAlign: 'right' }}>Avg Order</th>
-                        <th style={{ textAlign: 'right' }}>Lifetime Value</th>
+                        <th style={{ textAlign: 'right' }}>Total Spent</th>
                         <th style={{ textAlign: 'center' }}>Last Order</th>
                       </tr>
                     </thead>
@@ -488,8 +603,7 @@ export default function DashboardPage() {
                               </tr>
                             );
                           })
-                        : <tr><td colSpan={6} style={{ textAlign: 'center', padding: 32, color: T.muted }}>No customer data</td></tr>
-                      }
+                        : <tr><td colSpan={6} style={{ textAlign: 'center', padding: 32, color: T.muted }}>No customer data</td></tr>}
                     </tbody>
                   </table>
                 </div>
