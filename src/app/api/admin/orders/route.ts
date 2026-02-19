@@ -5,9 +5,7 @@ import { auth } from "@clerk/nextjs/server";
 
 const connectDB = async () => {
   if (mongoose.connection.readyState >= 1) return;
-  await mongoose.connect(process.env.MONGODB_URL!, {
-    dbName: 'clerk-db',
-  });
+  await mongoose.connect(process.env.MONGODB_URL!, { dbName: 'clerk-db' });
 };
 
 async function checkAdmin() {
@@ -15,14 +13,12 @@ async function checkAdmin() {
   return sessionClaims?.metadata?.role === "admin";
 }
 
+const VALID_STATUSES = ['Pending', 'Completed', 'Cancelled'];
+
 export async function GET(req: Request) {
   try {
     await connectDB();
-    const isAdmin = await checkAdmin();
-
-    if (!isAdmin) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!await checkAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const orders = await Order.find({}).sort({ createdAt: -1 });
     return NextResponse.json(orders);
@@ -34,24 +30,24 @@ export async function GET(req: Request) {
 export async function PUT(req: Request) {
   try {
     await connectDB();
-    const isAdmin = await checkAdmin();
-
-    if (!isAdmin) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!await checkAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { orderId, status } = await req.json();
 
-    if (!orderId || !status) {
-      return NextResponse.json({ error: "Missing data" }, { status: 400 });
+    if (!orderId || !status) return NextResponse.json({ error: "Missing data" }, { status: 400 });
+
+    if (!VALID_STATUSES.includes(status)) {
+      return NextResponse.json({ error: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}` }, { status: 400 });
     }
 
-    const updatedOrder = await Order.findByIdAndUpdate(
-      orderId,
-      { status },
-      { new: true }
-    );
+    const order = await Order.findById(orderId);
+    if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
 
+    if (order.status === 'Completed' || order.status === 'Cancelled') {
+      return NextResponse.json({ error: "Finalised orders cannot be changed." }, { status: 400 });
+    }
+
+    const updatedOrder = await Order.findByIdAndUpdate(orderId, { status }, { new: true });
     return NextResponse.json({ success: true, order: updatedOrder });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

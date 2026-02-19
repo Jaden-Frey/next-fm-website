@@ -33,26 +33,20 @@ export default function AdminOrdersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
+  useEffect(() => { fetchOrders(); }, []);
 
   const fetchOrders = async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch('/api/admin/orders');
-      if (res.status === 401) {
-        setError("Unauthorized: You do not have admin access.");
-        return;
-      }
+      if (res.status === 401) { setError("Unauthorized: You do not have admin access."); return; }
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         setError(data.error || `Server error: ${res.status}`);
         return;
       }
-      const data = await res.json();
-      setOrders(data);
+      setOrders(await res.json());
     } catch (err: any) {
       setError("Network error: Could not connect to the server.");
       console.error("Failed to load orders", err);
@@ -68,10 +62,9 @@ export default function AdminOrdersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId, status: newStatus }),
       });
-
       if (res.ok) {
         setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: newStatus } : o));
-        if (selectedOrder && selectedOrder._id === orderId) {
+        if (selectedOrder?._id === orderId) {
           setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null);
         }
       }
@@ -91,8 +84,7 @@ export default function AdminOrdersPage() {
 
   const getStatusBadge = (status: string) => {
     const s = status.toLowerCase();
-    if (s === 'pending') return 'bg-warning text-dark';
-    if (s === 'processing') return 'bg-info text-dark';
+    if (s === 'pending')   return 'bg-warning text-dark';
     if (s === 'completed') return 'bg-success text-white';
     if (s === 'cancelled') return 'bg-danger text-white';
     return 'bg-secondary text-white';
@@ -115,10 +107,9 @@ export default function AdminOrdersPage() {
   );
 
   return (
-    <div className="container-fluid py-5 bg-light font-sans" style={{ minHeight: '100vh' }}>
+    <div className="container-fluid py-5 bg-light" style={{ minHeight: '100vh' }}>
       <div className="container">
 
-        {/* Header */}
         <div className="d-flex justify-content-between align-items-center mb-5">
           <div>
             <h1 className="h2 fw-bold text-dark mb-1">Order Management</h1>
@@ -126,7 +117,6 @@ export default function AdminOrdersPage() {
           </div>
         </div>
 
-        {/* Filters Card */}
         <div className="card border-0 shadow-sm rounded-4 mb-4">
           <div className="card-body p-4">
             <div className="row g-3 align-items-center">
@@ -140,19 +130,14 @@ export default function AdminOrdersPage() {
                     className="form-control border-start-0 ps-0"
                     placeholder="Search by ID or Customer Name..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={e => setSearchTerm(e.target.value)}
                   />
                 </div>
               </div>
               <div className="col-md-3">
-                <select
-                  className="form-select"
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                >
+                <select className="form-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
                   <option value="All">All Statuses</option>
                   <option value="Pending">Pending</option>
-                  <option value="Processing">Processing</option>
                   <option value="Completed">Completed</option>
                   <option value="Cancelled">Cancelled</option>
                 </select>
@@ -164,7 +149,6 @@ export default function AdminOrdersPage() {
           </div>
         </div>
 
-        {/* Orders Table */}
         <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
           <div className="table-responsive">
             <table className="table table-hover align-middle mb-0">
@@ -180,30 +164,25 @@ export default function AdminOrdersPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredOrders.length > 0 ? (
-                  filteredOrders.map((order) => (
-                    <tr key={order._id}>
-                      <td className="ps-4 fw-bold text-primary">#{order._id.slice(-6).toUpperCase()}</td>
-                      <td className="text-muted small">{new Date(order.createdAt).toLocaleDateString()}</td>
-                      <td className="fw-medium">{order.customerDetails?.name || "Guest"}</td>
-                      <td className="small text-muted">{order.items.length} items</td>
-                      <td className="fw-bold">R{order.totalAmount.toFixed(2)}</td>
-                      <td>
-                        <span className={`badge rounded-pill px-3 py-2 fw-normal ${getStatusBadge(order.status)}`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="text-end pe-4">
-                        <button
-                          className="btn btn-sm btn-light border"
-                          onClick={() => setSelectedOrder(order)}
-                        >
-                          Details
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
+                {filteredOrders.length > 0 ? filteredOrders.map(order => (
+                  <tr key={order._id}>
+                    <td className="ps-4 fw-bold text-primary">#{order._id.slice(-6).toUpperCase()}</td>
+                    <td className="text-muted small">{new Date(order.createdAt).toLocaleDateString()}</td>
+                    <td className="fw-medium">{order.customerDetails?.name || "Guest"}</td>
+                    <td className="small text-muted">{order.items.length} items</td>
+                    <td className="fw-bold">R{order.totalAmount.toFixed(2)}</td>
+                    <td>
+                      <span className={`badge rounded-pill px-3 py-2 fw-normal ${getStatusBadge(order.status)}`}>
+                        {order.status}
+                      </span>
+                    </td>
+                    <td className="text-end pe-4">
+                      <button className="btn btn-sm btn-light border" onClick={() => setSelectedOrder(order)}>
+                        Details
+                      </button>
+                    </td>
+                  </tr>
+                )) : (
                   <tr>
                     <td colSpan={7} className="text-center py-5 text-muted">
                       <div className="py-5">
@@ -220,7 +199,6 @@ export default function AdminOrdersPage() {
 
       </div>
 
-      {/* --- DETAILS MODAL --- */}
       {selectedOrder && (
         <>
           <div className="modal-backdrop fade show" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}></div>
@@ -238,7 +216,6 @@ export default function AdminOrdersPage() {
 
                 <div className="modal-body p-4 pt-0">
 
-                  {/* Status Control Section */}
                   <div className="card bg-light border-0 rounded-3 mb-4">
                     <div className="card-body p-3 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
                       <div className="d-flex align-items-center">
@@ -247,28 +224,30 @@ export default function AdminOrdersPage() {
                           {selectedOrder.status}
                         </span>
                       </div>
-                      <div className="d-flex gap-2 w-100 w-md-auto">
-                        <button
-                          onClick={() => updateStatus(selectedOrder._id, 'Processing')}
-                          className={`btn btn-sm flex-grow-1 ${selectedOrder.status === 'Processing' ? 'btn-primary' : 'btn-outline-primary'}`}>
-                          Processing
-                        </button>
-                        <button
-                          onClick={() => updateStatus(selectedOrder._id, 'Completed')}
-                          className={`btn btn-sm flex-grow-1 ${selectedOrder.status === 'Completed' ? 'btn-success' : 'btn-outline-success'}`}>
-                          Complete
-                        </button>
-                        <button
-                          onClick={() => updateStatus(selectedOrder._id, 'Cancelled')}
-                          className={`btn btn-sm flex-grow-1 ${selectedOrder.status === 'Cancelled' ? 'btn-danger' : 'btn-outline-danger'}`}>
-                          Cancel
-                        </button>
-                      </div>
+                      {/* Only Pending orders can be acted on */}
+                      {selectedOrder.status !== 'Cancelled' && selectedOrder.status !== 'Completed' && (
+                        <div className="d-flex gap-2 w-100 w-md-auto">
+                          <button
+                            onClick={() => updateStatus(selectedOrder._id, 'Completed')}
+                            className="btn btn-sm btn-outline-success flex-grow-1"
+                          >
+                            Mark as Completed
+                          </button>
+                          <button
+                            onClick={() => updateStatus(selectedOrder._id, 'Cancelled')}
+                            className="btn btn-sm btn-outline-danger flex-grow-1"
+                          >
+                            Cancel Order
+                          </button>
+                        </div>
+                      )}
+                      {(selectedOrder.status === 'Completed' || selectedOrder.status === 'Cancelled') && (
+                        <span className="text-muted small fst-italic">This order is finalised and cannot be changed.</span>
+                      )}
                     </div>
                   </div>
 
                   <div className="row g-4 mb-4">
-                    {/* Customer Info */}
                     <div className="col-md-6">
                       <div className="p-3 border rounded-3 h-100">
                         <h6 className="small text-uppercase fw-bold text-muted mb-3">Customer Details</h6>
@@ -290,7 +269,6 @@ export default function AdminOrdersPage() {
                       </div>
                     </div>
 
-                    {/* Payment Info */}
                     <div className="col-md-6">
                       <div className="p-3 border rounded-3 h-100 bg-light">
                         <h6 className="small text-uppercase fw-bold text-muted mb-3">Payment Summary</h6>
@@ -307,7 +285,6 @@ export default function AdminOrdersPage() {
                     </div>
                   </div>
 
-                  {/* Items List */}
                   <h6 className="small text-uppercase fw-bold text-muted mb-3">Items Ordered</h6>
                   <div className="border rounded-3 overflow-hidden">
                     <ul className="list-group list-group-flush">
