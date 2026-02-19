@@ -49,25 +49,21 @@ export default function Home() {
   return (
     <>
       {/* 1. Static Hero Section */}
-      <section className="hero-static position-relative">
-        <div className="hero-overlay"></div>
-        <div className="container h-100">
-          <div className="row h-100 align-items-center justify-content-center text-center">
-            <div className="col-lg-8 position-relative z-2 hero-content">
-              <span className="badge bg-orange px-3 py-2 mb-3 rounded-pill text-uppercase ls-2">
-                Premium Selection
-              </span>
-              <h1 className="display-2 fw-bolder text-white mb-3">
-                Experience the Taste of <br/>
-                <span className="text-orange">True Quality</span>
-              </h1>
-              <p className="lead text-white-50 mb-5 fs-4">
-                Locally sourced, expertly cut, and delivered fresh to your door.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+     <header className="hero-static position-relative">
+  <div className="hero-overlay" />
+  <div className="container position-relative text-center text-white my-5" style={{ zIndex: 2 }}>
+    <span className="badge bg-orange px-3 py-2 mb-3 rounded-pill text-uppercase ls-2">
+      Premium Selection
+    </span>
+    <h1 className="display-2 fw-bolder text-white mb-3">
+      Experience the Taste of <br />
+      <span className="text-orange">True Quality</span>
+    </h1>
+    <p className="lead text-white-50 mb-0 fs-4">
+      Locally sourced, expertly cut, and delivered fresh to your door.
+    </p>
+  </div>
+</header>
 
       {/* 2. Upload Section (UPDATED: Clean White Card Design) */}
       <section className="py-5 bg-white position-relative z-2">

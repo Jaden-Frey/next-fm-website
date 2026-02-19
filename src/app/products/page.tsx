@@ -8,11 +8,11 @@ import AdminProductModal from "../../components/adminproductmodal";
 const FALLBACK_IMAGE = "https://placehold.co/600x400/222/fff?text=No+Image";
 
 const CATEGORY_DEFINITIONS = [
-  { id: "all",     name: "All Products" },
-  { id: "beef",    name: "Beef"         },
-  { id: "pork",    name: "Pork"         },
-  { id: "chicken", name: "Chicken"      },
-  { id: "lamb",    name: "Lamb"         },
+  { id: "all",     label: "All Products", color: "#ffffff" },
+  { id: "beef",    label: "Beef",         color: "#e05252" },
+  { id: "chicken", label: "Chicken",      color: "#f0c040" },
+  { id: "pork",    label: "Pork",         color: "#5bbfde" },
+  { id: "lamb",    label: "Lamb",         color: "#4caf7a" },
 ];
 
 interface Product {
@@ -121,22 +121,15 @@ function ProductsContent() {
     }
   };
 
-  const openAddModal = () => { setEditingProduct(null); setIsModalOpen(true); };
-
-  const openEditModal = (product: Product, e: React.MouseEvent) => {
-    e.preventDefault();
-    setEditingProduct(product);
-    setIsModalOpen(true);
-  };
-
-  const onDeleteClick = (product: Product, e: React.MouseEvent) => {
-    e.preventDefault();
-    if (product._id) handleDelete(product._id);
-  };
+  const openAddModal  = () => { setEditingProduct(null); setIsModalOpen(true); };
+  const openEditModal = (product: Product, e: React.MouseEvent) => { e.preventDefault(); setEditingProduct(product); setIsModalOpen(true); };
+  const onDeleteClick = (product: Product, e: React.MouseEvent) => { e.preventDefault(); if (product._id) handleDelete(product._id); };
 
   const filteredProducts = selectedCategory === "all"
     ? products
     : products.filter((p) => p.category === selectedCategory);
+
+  const activeCat = CATEGORY_DEFINITIONS.find((c) => c.id === selectedCategory)!;
 
   if (loading)
     return (
@@ -147,41 +140,85 @@ function ProductsContent() {
 
   return (
     <>
-      <header className="py-5 bg-dark position-relative" style={{ overflow: "hidden" }}>
-        <div style={{ backgroundImage: "url('https://images.unsplash.com/photo-1600891964092-4316c288032e?q=80&w=2070&auto=format&fit=crop')", backgroundSize: "cover", backgroundPosition: "center", position: "absolute", inset: 0, opacity: 0.5 }} />
-        <div className="container position-relative text-center text-white my-5">
-          <h1 className="display-4 fw-bolder">Shop our Selections</h1>
-          <p className="lead fw-normal text-white-50 mb-0">Premium Cuts, Delivered Fresh</p>
+      {/* ── Hero ── uses .hero-header from your global CSS (butchery-bg2.png) */}
+      <header className="hero-header position-relative" style={{ overflow: "hidden" }}>
+        <div style={{
+          backgroundImage: "url('/images/butchery-bg2.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          position: "absolute",
+          inset: 0,
+        }} />
+      <div style={{
+           position: "absolute",
+           inset: 0,
+           background: "linear-gradient(to bottom, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.45) 100%)"
+      }} />
+        <div className="container position-relative text-center text-white hero-content">
+          <p className="hero-eyebrow">Premium Butchery</p>
+          <h1 className="hero-title">Our Selections</h1>
+          <p className="hero-sub">Hand-selected cuts, delivered fresh to your door</p>
         </div>
       </header>
 
-      <section className="py-4 bg-light sticky-top" style={{ top: 0, zIndex: 100 }}>
-        <div className="container d-flex align-items-center justify-content-between">
-          <div className="btn-group flex-wrap shadow-sm rounded-pill overflow-hidden bg-white">
-            {CATEGORY_DEFINITIONS.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => { setSelectedCategory(cat.id); window.history.pushState(null, "", `?category=${cat.id}`); }}
-                className={`btn px-4 py-2 border-0 fw-bold ${selectedCategory === cat.id ? "btn-dark" : "btn-light bg-white text-muted"}`}
-              >
-                {cat.name}
-                <span className={`badge ms-2 rounded-pill ${selectedCategory === cat.id ? "bg-white text-dark" : "bg-light text-dark border"}`}>
-                  {getCategoryCount(cat.id)}
-                </span>
-              </button>
-            ))}
-          </div>
-          {isAdmin && (
-            <button className="btn btn-outline-danger" onClick={handleDeleteCategory} disabled={deletingCategory || selectedCategory === "all"}>
-              {deletingCategory ? "Deleting..." : "Delete Category"}
-            </button>
-          )}
-        </div>
-      </section>
-
-      <section className="py-5">
+      {/* ── Category Filter Strip ── */}
+      <div className="filter-strip-wrapper sticky-top">
         <div className="container">
+          <div className="filter-strip">
+            <div className="filter-pills">
+              {CATEGORY_DEFINITIONS.map((cat) => {
+                const isActive = selectedCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => { setSelectedCategory(cat.id); window.history.pushState(null, "", `?category=${cat.id}`); }}
+                    className={`filter-pill${isActive ? " filter-pill--active" : ""}`}
+                  >
+                    <span
+                      className="pill-dot"
+                      style={{
+                        background: cat.color,
+                        boxShadow: isActive ? `0 0 8px ${cat.color}99` : "none",
+                      }}
+                    />
+                    <span className="pill-label">{cat.label}</span>
+                    <span className={`pill-badge${isActive ? " pill-badge--active" : ""}`}>
+                      {getCategoryCount(cat.id)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {isAdmin && (
+              <button
+                className="delete-cat-btn"
+                onClick={handleDeleteCategory}
+                disabled={deletingCategory || selectedCategory === "all"}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1H2.5zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zM8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5zm3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0z" />
+                </svg>
+                {deletingCategory ? "Deleting…" : "Delete Category"}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Product Grid ── */}
+      <section className="py-5" style={{ background: "#f4f4f4" }}>
+        <div className="container">
+          <p className="results-count mb-4">
+            Showing <strong>{filteredProducts.length}</strong>{" "}
+            {filteredProducts.length === 1 ? "product" : "products"}
+            {selectedCategory !== "all" && (
+              <> in <strong style={{ color: activeCat.color === "#ffffff" ? "#222" : activeCat.color }}>{activeCat.label}</strong></>
+            )}
+          </p>
+
           <div className="row row-cols-1 row-cols-md-3 row-cols-xl-4 g-4">
+
             {isAdmin && (
               <div className="col">
                 <div
@@ -204,11 +241,10 @@ function ProductsContent() {
               let gpClass = "text-danger";
               let gpStyle: React.CSSProperties = {};
               let gpPercent = 0;
-              
+
               if (product.cost != null && product.price > 0) {
                 const gpDecimal = (product.price - product.cost) / product.price;
                 gpPercent = Math.round(gpDecimal * 100);
-                
                 if (gpDecimal >= 0.50) {
                   gpClass = "text-success";
                 } else if (gpDecimal >= 0.20) {
@@ -219,7 +255,8 @@ function ProductsContent() {
 
               return (
                 <div key={product.id} className="col">
-                  <div className="card h-100 shadow-sm border-0 transition-transform hover-lift position-relative overflow-hidden">
+                  <div className="card h-100 shadow-sm border-0 hover-lift position-relative overflow-hidden">
+
                     {isAdmin && (
                       <div className="position-absolute top-0 end-0 p-2 d-flex gap-2" style={{ zIndex: 10 }}>
                         <button
@@ -243,10 +280,7 @@ function ProductsContent() {
                       </div>
                     )}
 
-                    {!isAdmin && product.onSale && (
-                      <div className="badge bg-danger text-white position-absolute top-0 start-0 m-2" style={{ zIndex: 1 }}>SALE</div>
-                    )}
-                    {isAdmin && product.onSale && (
+                    {product.onSale && (
                       <div className="badge bg-danger text-white position-absolute top-0 start-0 m-2" style={{ zIndex: 1 }}>SALE</div>
                     )}
 
@@ -266,18 +300,14 @@ function ProductsContent() {
                         <span className={`fw-bold ${product.onSale ? "text-danger fs-5" : "fs-5 text-dark"}`}>
                           R{product.price.toFixed(2)}
                         </span>
-                        
+
                         {isAdmin && product.cost != null && (
-                          <div className="mt-2 d-flex justify-content-center align-items-center bg-light rounded py-1 px-2 border mx-auto" style={{maxWidth: '90%'}}>
-                              <span className="text-muted text-uppercase me-2" style={{fontSize: '0.65rem', letterSpacing: '0.5px', fontWeight: 600}}>Cost</span>
-                              <span className="fw-bold text-dark me-3" style={{fontSize: '0.8rem'}}>R{product.cost.toFixed(2)}</span>
-                              
-                              <div className="vr me-2 opacity-25" style={{height: '14px'}}></div>
-                              
-                              <span className="text-muted text-uppercase me-1" style={{fontSize: '0.65rem', letterSpacing: '0.5px', fontWeight: 600}}>GP</span>
-                              <span className={`fw-bold ${gpClass}`} style={{fontSize: '0.8rem', ...gpStyle}}>
-                                  {gpPercent}%
-                              </span>
+                          <div className="mt-2 d-flex justify-content-center align-items-center bg-light rounded py-1 px-2 border mx-auto" style={{ maxWidth: "90%" }}>
+                            <span className="text-muted text-uppercase me-2" style={{ fontSize: "0.65rem", letterSpacing: "0.5px", fontWeight: 600 }}>Cost</span>
+                            <span className="fw-bold text-dark me-3" style={{ fontSize: "0.8rem" }}>R{product.cost.toFixed(2)}</span>
+                            <div className="vr me-2 opacity-25" style={{ height: "14px" }}></div>
+                            <span className="text-muted text-uppercase me-1" style={{ fontSize: "0.65rem", letterSpacing: "0.5px", fontWeight: 600 }}>GP</span>
+                            <span className={`fw-bold ${gpClass}`} style={{ fontSize: "0.8rem", ...gpStyle }}>{gpPercent}%</span>
                           </div>
                         )}
                       </div>
@@ -302,10 +332,145 @@ function ProductsContent() {
       />
 
       <style jsx>{`
-        .hover-lift { transition: transform 0.2s ease-in-out; }
-        .hover-lift:hover { transform: translateY(-5px); }
-        .hover-shadow:hover { box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important; }
-        .border-dashed { border-style: dashed !important; }
+        /* ── Filter Strip ── */
+        .filter-strip-wrapper {
+          background: #1e1e1e;
+          border-bottom: 1px solid rgba(255,255,255,0.07);
+          box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+          top: 0;
+          z-index: 100;
+        }
+        .filter-strip {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          padding: 12px 0;
+        }
+        .filter-pills {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        /* Pill buttons */
+        .filter-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 16px;
+          border-radius: 100px;
+          border: 1.5px solid rgba(255,255,255,0.1);
+          background: rgba(255,255,255,0.05);
+          color: rgba(255,255,255,0.55);
+          font-size: 0.82rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.18s ease;
+          white-space: nowrap;
+          line-height: 1;
+        }
+        .filter-pill:hover {
+          border-color: rgba(255,255,255,0.28);
+          color: rgba(255,255,255,0.9);
+          background: rgba(255,255,255,0.09);
+          transform: translateY(-1px);
+        }
+        .filter-pill--active {
+          border-color: rgba(255,255,255,0.2);
+          background: rgba(255,255,255,0.12);
+          color: #fff;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+        }
+        .filter-pill--active:hover {
+          background: rgba(255,255,255,0.16);
+          color: #fff;
+          transform: translateY(-1px);
+        }
+
+        /* Colored dot */
+        .pill-dot {
+          display: inline-block;
+          width: 9px;
+          height: 9px;
+          border-radius: 50%;
+          flex-shrink: 0;
+          transition: box-shadow 0.18s ease;
+        }
+        .pill-label {
+          font-weight: 600;
+          letter-spacing: 0.01em;
+        }
+        .pill-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 20px;
+          height: 20px;
+          padding: 0 5px;
+          border-radius: 100px;
+          font-size: 0.63rem;
+          font-weight: 700;
+          background: rgba(255,255,255,0.08);
+          color: rgba(255,255,255,0.4);
+          transition: background 0.18s, color 0.18s;
+        }
+        .pill-badge--active {
+          background: rgba(255,255,255,0.15);
+          color: rgba(255,255,255,0.85);
+        }
+
+        /* Admin delete button */
+        .delete-cat-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 0.68rem;
+          font-weight: 600;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.3);
+          background: none;
+          border: 1.5px solid rgba(255,255,255,0.1);
+          border-radius: 8px;
+          padding: 7px 13px;
+          cursor: pointer;
+          transition: all 0.18s ease;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+        .delete-cat-btn:hover:not(:disabled) {
+          color: #e05252;
+          border-color: rgba(224,82,82,0.5);
+          background: rgba(224,82,82,0.08);
+        }
+        .delete-cat-btn:disabled {
+          opacity: 0.25;
+          cursor: not-allowed;
+        }
+
+        /* Results count */
+        .results-count {
+          font-size: 0.84rem;
+          color: #999;
+        }
+        .results-count strong { color: #222; }
+
+        /* Product cards */
+        .hover-lift {
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .hover-lift:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 28px rgba(0,0,0,0.1) !important;
+        }
+        .hover-shadow:hover {
+          box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important;
+        }
+        .border-dashed {
+          border-style: dashed !important;
+        }
       `}</style>
     </>
   );
@@ -313,7 +478,13 @@ function ProductsContent() {
 
 export default function ProductsPage() {
   return (
-    <Suspense fallback={<div className="min-vh-100 d-flex align-items-center justify-content-center"><div className="spinner-border text-dark"></div></div>}>
+    <Suspense
+      fallback={
+        <div className="min-vh-100 d-flex align-items-center justify-content-center">
+          <div className="spinner-border text-dark"></div>
+        </div>
+      }
+    >
       <ProductsContent />
     </Suspense>
   );
