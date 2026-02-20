@@ -31,10 +31,10 @@ export async function GET(req: Request) {
   try {
     await connectDB();
 
-    // Check role so cost is only returned to admins
     const { sessionClaims } = await auth();
     const isAdmin = sessionClaims?.metadata?.role === "admin";
-    const costProjection: any = isAdmin ? {} : { cost: 0 };
+    
+    const costProjection: Record<string, number> = isAdmin ? {} : { cost: 0 };
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -50,7 +50,6 @@ export async function GET(req: Request) {
       if (!product) {
         return NextResponse.json({ error: "Product not found" }, { status: 404 });
       }
-
       return NextResponse.json(product);
     }
 
