@@ -150,7 +150,6 @@ export default function AdminProductModal({ isOpen, onClose, onSubmit, initialDa
                   <div className="col-lg-7">
                     <div className="row g-3">
 
-                      {/* Name */}
                       <div className="col-12">
                         <label className="form-label fw-bold small text-uppercase text-secondary">Product Name</label>
                         <div className="input-group">
@@ -161,7 +160,6 @@ export default function AdminProductModal({ isOpen, onClose, onSubmit, initialDa
                         </div>
                       </div>
 
-                      {/* Price + Cost side by side */}
                       <div className="col-md-6">
                         <label className="form-label fw-bold small text-uppercase text-secondary">Selling Price</label>
                         <div className="input-group">
@@ -189,7 +187,6 @@ export default function AdminProductModal({ isOpen, onClose, onSubmit, initialDa
                         </div>
                       </div>
 
-                      {/* Category */}
                       <div className="col-12">
                         <label className="form-label fw-bold small text-uppercase text-secondary">Category</label>
                         <select className="form-select" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })}>
@@ -200,13 +197,11 @@ export default function AdminProductModal({ isOpen, onClose, onSubmit, initialDa
                         </select>
                       </div>
 
-                      {/* Description */}
                       <div className="col-12">
                         <label className="form-label fw-bold small text-uppercase text-secondary">Description</label>
                         <textarea className="form-control" rows={3} placeholder="Describe the cut, origin, or flavor profile..." value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
                       </div>
 
-                      {/* On Sale toggle */}
                       <div className="col-12 mt-2">
                         <div className="form-check form-switch p-3 bg-light rounded-3 border d-flex justify-content-between align-items-center">
                           <label className="form-check-label fw-bold mb-0 cursor-pointer" htmlFor="saleCheck">

@@ -31,7 +31,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const guestId = getGuestId();
 
-  // Fetch wishlist from MongoDB on mount
+  // Fetch wishlist from MongoDB 
   const fetchWishlist = async () => {
     if (!guestId) {
       setLoading(false);
@@ -78,7 +78,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
           'Content-Type': 'application/json',
           'x-guest-id': guestId,
         },
-        body: JSON.stringify({ productId: product.id }), // Use numeric id
+        body: JSON.stringify({ productId: product.id }), 
       });
 
       if (!response.ok) {
@@ -88,8 +88,6 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
 
       const result = await response.json();
       console.log('[Wishlist] Toggle result:', result);
-
-      // Refresh wishlist after toggle to get updated data from server
       await fetchWishlist();
 
       return { success: true, action: result.action };
@@ -102,7 +100,6 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   // Check if product is in wishlist
   const isInWishlist = (id: string | number | undefined) => {
     if (!id) return false;
-    // Check by numeric id (the id field from productsData)
     return wishlist.some((p) => p.id === id);
   };
 

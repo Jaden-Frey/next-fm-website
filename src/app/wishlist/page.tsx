@@ -24,7 +24,7 @@ export default function WishlistPage() {
     <div className="container py-3" style={{ marginTop: '30px', minHeight: '80vh' }}>
       <h2 className="mb-4 border-bottom pb-3">My Wishlist ({wishlistItems.length})</h2>
       
-      {/* Grid Layout: Items align left */}
+      {/* Grid Layout */}
       <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
         {wishlistItems.map((product) => (
           <div className="col" key={product.id}>

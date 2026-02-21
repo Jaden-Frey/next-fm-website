@@ -224,7 +224,6 @@ export default function AdminOrdersPage() {
                           {selectedOrder.status}
                         </span>
                       </div>
-                      {/* Only Pending orders can be acted on */}
                       {selectedOrder.status !== 'Cancelled' && selectedOrder.status !== 'Completed' && (
                         <div className="d-flex gap-2 w-100 w-md-auto">
                           <button

@@ -56,10 +56,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No items provided" }, { status: 400 });
     }
 
-    // 2. Define the Query (Who is placing this order?)
+    // 2. Define who is placing this order
     const query = userId ? { userId } : { guestId };
 
-    // 3. Create the New Order (always starts as Pending)
+    // 3. Create the New Order 
     const newOrder = await Order.create({
       userId: userId || null,
       guestId: guestId || null,
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
       createdAt: new Date(),
     });
 
-    // 4. Clear the Cart (for the specific user or guest)
+    // 4. Clear the Cart 
     const cart = await Cart.findOne(query);
     if (cart) {
       cart.items = [];

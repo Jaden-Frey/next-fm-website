@@ -2,7 +2,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useUser } from "@clerk/nextjs";
 
-// Define types
 export interface Product {
   id: number;
   name: string;
@@ -39,11 +38,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (!isLoaded) return;
 
     const initialize = async () => {
-      // CASE A: User is Signed In
       if (isSignedIn) {
         const pendingGuestId = localStorage.getItem('guestId');
         
-        // If we have a guest ID, MERGE IT FIRST
         if (pendingGuestId) {
           try {
             await fetch('/api/cart/merge', {
@@ -51,18 +48,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ guestId: pendingGuestId })
             });
-            // Clear guest ID after successful merge
             localStorage.removeItem('guestId');
             setGuestId(null);
           } catch (err) {
             console.error("Merge failed", err);
           }
         }
-        // THEN fetch the cart (now containing merged items)
         await fetchCart();
       } 
       
-      // CASE B: User is Guest
       else {
         let id = localStorage.getItem('guestId');
         if (!id) {
@@ -77,11 +71,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     initialize();
   }, [isLoaded, isSignedIn]);
 
-  // 2. Fetch Cart Function
   const fetchCart = async () => {
     const headers: any = {};
     
-    // Logic: If signed in, Clerk handles auth. If not, send guestId.
     if (!isSignedIn) {
        const currentGuestId = guestId || localStorage.getItem('guestId');
        if (!currentGuestId) return; 
@@ -102,7 +94,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // 3. Cart Operations
   const addToCart = async (product: Product, quantity = 1) => {
     const headers: any = { 'Content-Type': 'application/json' };
     

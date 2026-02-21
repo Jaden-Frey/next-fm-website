@@ -1,4 +1,3 @@
-// app/api/admin/dashboard/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { auth } from "@clerk/nextjs/server";
@@ -9,7 +8,6 @@ const userSchema    = new mongoose.Schema({}, { strict: false });
 
 const Order   = mongoose.models.Order   || mongoose.model("Order",   orderSchema);
 const Product = mongoose.models.Product || mongoose.model("Product", productSchema);
-// Assumes User documents have a createdAt field (synced via Clerk webhook)
 const User    = mongoose.models.User    || mongoose.model("User",    userSchema);
 
 const connectDB = async () => {
@@ -29,7 +27,6 @@ function getRangeFrom(range: Range): Date {
 }
 
 function bucketKey(date: Date, range: Range): string {
-  // Wide ranges use monthly buckets; short ranges use daily buckets
   const wide = range === "90d" || range === "all";
   return wide
     ? date.toLocaleString("default", { month: "short", year: "2-digit" })
@@ -59,8 +56,7 @@ export async function GET(req: NextRequest) {
     }, {});
 
     const hasCostData = (products as any[]).some(p => p.cost != null && p.cost > 0);
-
-        const customerMap:   Record<string, { name: string; email: string; city: string; totalSpent: number; orderCount: number; firstOrder: Date; lastOrder: Date }> = {};
+    const customerMap:   Record<string, { name: string; email: string; city: string; totalSpent: number; orderCount: number; firstOrder: Date; lastOrder: Date }> = {};
     const productStats:  Record<string, { id: number; name: string; category: string; price: number; qtySold: number; revenue: number; orderCount: number }> = {};
     const categoryStats: Record<string, { revenue: number; qtySold: number }> = {};
     const statusStats:   Record<string, number> = {};

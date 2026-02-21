@@ -30,8 +30,6 @@ interface Product {
   sku?: string;
 }
 
-// ── Fully self-contained button — zero dependency on any CSS class ──
-// Inline styles are immune to Tailwind preflight and global stylesheet overrides.
 function ViewDetailsButton({ href, isAI }: { href: string; isAI: boolean }) {
   const [hovered, setHovered] = useState(false);
 
@@ -94,7 +92,6 @@ function ViewDetailsButton({ href, isAI }: { href: string; isAI: boolean }) {
       onMouseLeave={() => setHovered(false)}
     >
       View Details
-      {/* Orange-to-gold accent bar — only shown on AI match buttons */}
       {isAI && (
         <span style={{
           position: "absolute",
@@ -320,7 +317,6 @@ function ProductsContent() {
                   </p>
                 </div>
               </div>
-              {/* Reworked Clear Search button: cleaner, theme-matching, accessible */}
               <button
                 className="ai-clear-btn"
                 onClick={() => { window.location.href = "/products"; }}

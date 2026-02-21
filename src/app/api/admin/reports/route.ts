@@ -117,7 +117,7 @@ export async function GET(req: NextRequest) {
                             .map(([name, value]) => ({ name, value }))
                             .sort((a, b) => b.value - a.value);
 
-    // Array forms of the stats objects — consumed directly by Chart.js on the frontend
+    // Array forms of the stats objects —> Chart.js on the frontend
     const revenueOverTime      = Object.entries(revenueByBucket).map(([label, data])      => ({ label, ...data }));
     const customerGrowth       = Object.entries(customerGrowthMap).map(([label, signups]) => ({ label, signups }));
     const orderStatusBreakdown = Object.entries(statusStats).map(([status, count])        => ({ status, count }));

@@ -19,7 +19,7 @@ export interface Category {
 const PLACEHOLDER_IMG = 'https://placehold.co/600x400/222/fff?text=Coming+Soon';
 
 export const productsData: Product[] = [
-  // --- BEEF (5 Items) ---
+  // BEEF (5 Items) 
   {
     id: 1,
     category: 'beef',
@@ -72,7 +72,7 @@ export const productsData: Product[] = [
     description: 'Thick, juicy handcrafted beef burger patties. Ready for the grill.'
   },
 
-  // --- PORK ---
+  // PORK 
   {
     id: 6, 
     category: 'pork', 
@@ -124,7 +124,7 @@ export const productsData: Product[] = [
     description: 'Traditional pork sausages.'
   },
 
-  // --- CHICKEN ---
+  // CHICKEN
   {
     id: 11, 
     category: 'chicken', 
@@ -176,7 +176,7 @@ export const productsData: Product[] = [
     description: 'Juicy chicken drumsticks.'
   },
 
-  // --- LAMB ---
+  // LAMB
   {
     id: 16, 
     category: 'lamb', 

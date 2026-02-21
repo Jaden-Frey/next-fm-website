@@ -327,7 +327,6 @@ export default function DashboardPage() {
             </div>
 
             <Grid cols="1fr 1fr" gap={20} className="r-g2a">
-              {/* Orders over time — integer axis, always meaningful */}
               <Card title="Orders Over Time" badge="Count" badgeColor={T.green} bodyHeight={260}>
                 {fin.trend?.length
                   ? <Line data={{

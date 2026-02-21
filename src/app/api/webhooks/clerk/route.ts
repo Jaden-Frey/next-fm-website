@@ -1,9 +1,9 @@
-import type { WebhookEvent } from "@clerk/nextjs/server"; // type-only import
+import type { WebhookEvent } from "@clerk/nextjs/server"; 
 import { NextResponse } from "next/server";
 import { Webhook } from "svix";
 import { createUser, updateUser, deleteUser } from "../../../../lib/actions/user.action";
 
-export const runtime = "nodejs"; // explicit runtime for webhook libraries that rely on node
+export const runtime = "nodejs"; 
 
 export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
@@ -12,10 +12,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing webhook secret" }, { status: 500 });
   }
 
-  // Use the raw text body for signature verification
   const rawBody = await req.text();
-
-  // Read headers from the incoming request
   const svix_id = req.headers.get("svix-id") ?? undefined;
   const svix_timestamp = req.headers.get("svix-timestamp") ?? undefined;
   const svix_signature = req.headers.get("svix-signature") ?? undefined;
@@ -25,7 +22,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing Svix headers" }, { status: 400 });
   }
 
-  // Build headers object expected by svix.verify
   const headersObj: Record<string, string> = {
     "svix-id": svix_id,
     "svix-timestamp": svix_timestamp,
@@ -36,26 +32,21 @@ export async function POST(req: Request) {
   let evt: WebhookEvent;
 
   try {
-    // verify returns the parsed event
     evt = wh.verify(rawBody, headersObj) as WebhookEvent;
   } catch (err) {
     console.error("Error verifying webhook signature:", err);
     return NextResponse.json({ error: "Invalid webhook signature" }, { status: 400 });
   }
 
-  // Now parse the body (safe because we've already verified it)
   let payload: any;
   try {
     payload = JSON.parse(rawBody);
   } catch {
-    // Some webhook senders already parsed; fallback to evt.data if needed
     payload = evt?.data ?? {};
   }
 
-  // Basic logging
   console.log("Clerk webhook verified:", evt.type, "id:", evt.data?.id);
 
-  // Handle specific event types
   if (evt.type === "user.created") {
     const { id: clerkId, email_addresses, image_url, first_name, last_name, username } = evt.data as any;
 

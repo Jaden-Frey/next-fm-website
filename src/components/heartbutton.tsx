@@ -27,7 +27,6 @@ export default function HeartButton({ product }: { product: Product }) {
     }
   };
   
-  // 3. Wishlist Page Style (Red/Remove)
   if (isWishlistPage) {
     return (
       <div className="d-grid gap-2">

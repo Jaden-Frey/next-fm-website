@@ -12,7 +12,7 @@ export default function Home() {
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setImage(e.target.files[0]);
-      setError(null); // clear any previous error when a new file is selected
+      setError(null); 
     }
   };
 
@@ -42,23 +42,16 @@ export default function Home() {
       const data = await response.json();
       console.log("Image search result:", data);
 
-      // ── Redirect to products page with highlight params ──
-      // The API returns a redirectUrl shaped identically to the text search:
-      // /products?highlight=<ids>&ai_prompt=<label>&category=<animal>
-      // The products page highlights matched cards with the orange border + Best Match badge.
       if (data.redirectUrl) {
         router.push(data.redirectUrl);
       } else {
         router.push("/products");
       }
 
-      // Note: don't reset state or stop the loading spinner here —
-      // the page is navigating away so it doesn't matter.
-
     } catch (err: any) {
       console.error("Image search error:", err);
       setError(err.message || "Something went wrong. Please try again.");
-      setUploading(false); // only reset on error; on success we navigate away
+      setUploading(false); 
     }
   };
 
@@ -85,8 +78,6 @@ export default function Home() {
       <section className="py-5 bg-white position-relative z-2">
         <div className="container py-4">
           <div className="row justify-content-center">
-
-            {/* Section Title */}
             <div className="col-12 text-center mb-4">
               <h2 className="fw-bold text-dark display-6 mb-2">Search by Image</h2>
               <p className="text-muted">
@@ -94,17 +85,14 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Upload Card */}
             <div className="col-lg-6 col-md-8">
               <div className="card-upload">
-                {/* Orange Header */}
                 <div className="card-header-orange">
                   <i className="bi bi-stars me-2"></i>
                   AI Image Search
                 </div>
 
                 <div className="p-4">
-                  {/* Dashed Input Area */}
                   <label htmlFor="imageUpload" className="w-100 mb-0" style={{ cursor: 'pointer' }}>
                     <div className="upload-dropzone">
                       <i className="bi bi-image dropzone-icon d-block"></i>
@@ -126,7 +114,6 @@ export default function Home() {
                     disabled={uploading}
                   />
 
-                  {/* Error message */}
                   {error && (
                     <div className="alert alert-danger py-2 px-3 mt-3 mb-0 small" role="alert">
                       <i className="bi bi-exclamation-circle me-2"></i>
@@ -134,7 +121,6 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* Action Button */}
                   <button
                     className="btn-upload-action mt-3"
                     onClick={onSubmit}
@@ -170,7 +156,6 @@ export default function Home() {
           </div>
 
           <div className="row g-4 justify-content-center">
-            {/* Beef */}
             <div className="col-6 col-md-3">
               <Link href="/products?category=beef" className="category-card-dark d-block text-decoration-none text-center">
                 <div className="category-icon-wrapper-dark mb-3 mx-auto rounded-circle d-flex align-items-center justify-content-center">
@@ -181,7 +166,6 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* Chicken */}
             <div className="col-6 col-md-3">
               <Link href="/products?category=chicken" className="category-card-dark d-block text-decoration-none text-center">
                 <div className="category-icon-wrapper-dark mb-3 mx-auto rounded-circle d-flex align-items-center justify-content-center">
@@ -192,7 +176,6 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* Pork */}
             <div className="col-6 col-md-3">
               <Link href="/products?category=pork" className="category-card-dark d-block text-decoration-none text-center">
                 <div className="category-icon-wrapper-dark mb-3 mx-auto rounded-circle d-flex align-items-center justify-content-center">
@@ -203,7 +186,6 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* Lamb */}
             <div className="col-6 col-md-3">
               <Link href="/products?category=lamb" className="category-card-dark d-block text-decoration-none text-center">
                 <div className="category-icon-wrapper-dark mb-3 mx-auto rounded-circle d-flex align-items-center justify-content-center">

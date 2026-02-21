@@ -75,7 +75,7 @@ export default function ProductDetailPage() {
                alt={product.name}
                className="object-fit-cover w-100 h-100"
                onError={(e) => {
-                   (e.target as HTMLImageElement).src = '/images/placeholder.png'; // Fallback
+                   (e.target as HTMLImageElement).src = '/images/placeholder.png'; 
                }}
              />
           </div>
@@ -111,7 +111,7 @@ export default function ProductDetailPage() {
              <HeartButton product={product} />
           </div>
 
-          {/* Features Static Block */}
+          {/* Static Block */}
           <div className="mt-4 p-3 bg-light rounded">
             <h6 className="fw-bold">Product Features</h6>
             <ul className="mb-0 text-muted small ps-3">

@@ -113,7 +113,6 @@ export default function CartPage() {
 
           {/* LEFT: Cart Items */}
           <div className="col-lg-8">
-            {/* Header sits outside the card so it aligns with the sidebar heading */}
             <div className="d-flex align-items-center justify-content-between mb-3">
               <h1 className="h3 mb-0 fw-bold text-dark">Shopping Cart</h1>
               <span className="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-sm">
@@ -121,7 +120,7 @@ export default function CartPage() {
               </span>
             </div>
 
-            {/* Card wrapper — mirrors the sidebar card so both columns feel unified */}
+            {/* Card wrapper */}
             <div className="card border-0 shadow-sm rounded-4">
               <div className="card-body p-0">
                 {cart.map((item, index) => (
@@ -187,7 +186,7 @@ export default function CartPage() {
             </div>
           </div>
 
-          {/* RIGHT: Summary Sidebar */}
+          {/* Summary Sidebar */}
           <div className="col-lg-4">
             <div className="card border-0 shadow-sm rounded-4 sticky-top" style={{ top: '110px', zIndex: 10 }}>
               <div className="card-body p-4">

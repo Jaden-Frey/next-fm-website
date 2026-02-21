@@ -77,7 +77,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing productId" }, { status: 400 });
     }
 
-    // Find product. (Your Product model appears to have numeric `id` field.)
+    // Find product
     const dbProduct = await Product.findOne({ id: Number(productId) });
     if (!dbProduct) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });

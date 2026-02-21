@@ -37,7 +37,6 @@ export default function AddToCart({ product }: { product: Product }) {
 
   return (
     <div>
-      {/* Quantity Selector */}
       <div className="mb-3">
         <label className="form-label fw-bold">Quantity:</label>
         <div className="input-group" style={{ maxWidth: '150px' }}>
@@ -58,7 +57,6 @@ export default function AddToCart({ product }: { product: Product }) {
         </div>
       </div>
 
-      {/* Add Button */}
       <button 
         className="btn btn-dark w-100 py-2" 
         onClick={handleAddToCart}
@@ -67,7 +65,6 @@ export default function AddToCart({ product }: { product: Product }) {
         {isAdding ? "Adding..." : `Add to Cart • R${(product.price * quantity).toFixed(2)}`}
       </button>
 
-      {/* Success/Error Message */}
       {message && (
         <div className={`alert mt-3 ${message.includes("Failed") ? "alert-danger" : "alert-success"}`} role="alert">
           {message}

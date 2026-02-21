@@ -10,7 +10,7 @@ export async function GET() {
     // 1. Clear the DB
     await Product.deleteMany({});
 
-    // 2. Insert data directly (No Cloudinary, No Uploads)
+    // 2. Insert data directly into Mongo
     await Product.insertMany(productsData);
 
     return NextResponse.json({ 

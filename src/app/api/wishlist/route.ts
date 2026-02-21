@@ -62,7 +62,6 @@ export async function POST(req: Request) {
       action = "added";
     }
 
-    // 4. ERROR HANDLING 
     try {
       await wishlist.save();
     } catch (saveError: any) {

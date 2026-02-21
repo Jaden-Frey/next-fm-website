@@ -46,7 +46,7 @@ export async function POST(request: Request) {
             `ID:${p._id} | Name: ${p.name} | Category: ${p.category} | Description: ${p.description ?? ''}`
         ).join('\n');
 
-        // 5. Single Gemini call — analyse image AND match directly against catalog
+        // 5. Analyse image AND match directly against catalog
         const prompt = `
 You are an expert master butcher and AI assistant for a premium South African butcher shop.
 

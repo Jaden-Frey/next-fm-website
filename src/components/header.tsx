@@ -64,8 +64,6 @@ const Header = () => {
       <header className="bg-white border-bottom py-2">
         <div className="container">
           <div className="row align-items-center">
-
-            {/* Brand/Logo */}
             <div className={isAdmin ? 'col-8' : 'col-3'}>
               <Link href="/" className="text-decoration-none d-flex align-items-center">
                 <i className="bi bi-shop text-orange fs-4 me-2"></i>
@@ -73,7 +71,6 @@ const Header = () => {
               </Link>
             </div>
 
-            {/* AI Search Bar */}
             {!isAdmin && (
               <div className="col-5">
                 <form className="d-flex flex-column" role="search" onSubmit={handleSearch}>
@@ -110,7 +107,6 @@ const Header = () => {
               </div>
             )}
 
-            {/* User Actions */}
             <div className={isAdmin ? 'col-4' : 'col-4'}>
               <div className="d-flex justify-content-end align-items-center gap-3">
                 <SignedIn>
