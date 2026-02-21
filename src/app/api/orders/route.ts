@@ -30,21 +30,8 @@ export async function GET(req: Request) {
     // 2. Fetch all orders sorted by newest first
     const orders = await Order.find(query).sort({ createdAt: -1 });
 
-    if (orders.length > 1) {
-      const newestOrderId = orders[0]._id;
-      
-      // Update all OTHER orders for this user/guest that are still 'Pending' to 'Completed'
-      await Order.updateMany(
-        { ...query, _id: { $ne: newestOrderId }, status: 'Pending' },
-        { $set: { status: 'Completed' } }
-      );
-      
-      // Return the cleaned-up list
-      const updatedOrders = await Order.find(query).sort({ createdAt: -1 });
-      return NextResponse.json({ orders: updatedOrders });
-    }
-
     return NextResponse.json({ orders });
+
   } catch (error: any) {
     console.error("GET Orders Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -72,30 +59,24 @@ export async function POST(req: Request) {
     // 2. Define the Query (Who is placing this order?)
     const query = userId ? { userId } : { guestId };
 
-    // 3. Mark ALL previous "Pending" orders for this user/guest as "Completed"
-    await Order.updateMany(
-      { ...query, status: 'Pending' },
-      { $set: { status: 'Completed' } }
-    );
-
-    // 4. Create the New Order
+    // 3. Create the New Order (always starts as Pending)
     const newOrder = await Order.create({
-      userId: userId || null,   
-      guestId: guestId || null, 
-      items, 
-      totalAmount, 
-      status: 'Pending', 
-      customerDetails: customerDetails || {}, 
+      userId: userId || null,
+      guestId: guestId || null,
+      items,
+      totalAmount,
+      status: 'Pending',
+      customerDetails: customerDetails || {},
       paymentMethod: body.paymentMethod || "Cash on Delivery",
       createdAt: new Date(),
     });
 
-    // 5. Clear the Cart (for the specific user or guest)
+    // 4. Clear the Cart (for the specific user or guest)
     const cart = await Cart.findOne(query);
     if (cart) {
-        cart.items = [];
-        cart.totalAmount = 0;
-        await cart.save();
+      cart.items = [];
+      cart.totalAmount = 0;
+      await cart.save();
     }
 
     return NextResponse.json({ success: true, orderId: newOrder._id });

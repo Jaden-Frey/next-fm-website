@@ -3,11 +3,22 @@ import { NextResponse } from "next/server";
 
 // 1. Define Route Matchers
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]); 
-const isPublicRoute = createRouteMatcher(["/", "/products(.*)", "/about", "/contact","/wishlist","/cart(.*)","/sign-in(.*)", "/sign-up(.*)", "/api/webhooks/clerk(.*)", "/api/upload-image(.*)",
-  "/api/products(.*)", 
+const isPublicRoute = createRouteMatcher([
+  "/",
+  "/products(.*)",
+  "/about",
+  "/contact",
+  "/wishlist",
+  "/cart(.*)",
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/api/webhooks/clerk(.*)",
+  "/api/upload-image(.*)",
+  "/api/products(.*)",
+  "/api/search(.*)",    
   "/api/seed(.*)",
   "/api/wishlist(.*)",
-  "/api/cart",       
+  "/api/cart",
   "/api/cart/(.*)",
 ]);
 
@@ -15,13 +26,11 @@ export default clerkMiddleware(async (auth, req) => {
   const { userId, redirectToSignIn, sessionClaims } = await auth();
 
   // 2. Protect Authenticated Routes
-  // If the user is NOT signed in and the route is NOT public, redirect to sign-in
   if (!userId && !isPublicRoute(req)) {
     return redirectToSignIn();
   }
 
-  // 3. Protect Admin Routes (New Logic)
-  // If the user IS trying to access an admin route, but their role is NOT "admin", redirect to home
+  // 3. Protect Admin Routes
   if (
     isAdminRoute(req) &&
     sessionClaims?.metadata?.role !== "admin"

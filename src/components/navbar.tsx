@@ -28,14 +28,6 @@ const Navbar = () => {
             </Link>
           </li>
 
-          {!isAdmin && (
-            <li className="nav-item">
-              <Link href="/about" className="nav-link">
-                <i className="bi bi-info-circle me-2"></i>About
-              </Link>
-            </li>
-          )}
-
           <li className="nav-item d-none d-md-block border-start border-secondary mx-2" style={{ height: '30px' }}></li>
 
           {isLoaded && !isAdmin && (

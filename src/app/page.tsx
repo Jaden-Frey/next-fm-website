@@ -1,17 +1,20 @@
 "use client";
 import React, { ChangeEvent, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
-  const [image, setImage] = useState<File>();
+  const router = useRouter();
+  const [image, setImage] = useState<File | undefined>();
   const [uploading, setUploading] = useState(false);
-  const [recommendedProducts, setRecommendedProducts] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if(e.target.files && e.target.files.length > 0) {
+    if (e.target.files) {
       setImage(e.target.files[0]);
+      setError(null); // clear any previous error when a new file is selected
     }
-  }
+  };
 
   const onSubmit = async () => {
     if (!image) {
@@ -23,7 +26,7 @@ export default function Home() {
     formData.append("image", image);
 
     setUploading(true);
-    setRecommendedProducts([]); // Clear previous search results
+    setError(null);
 
     try {
       const response = await fetch("/api/upload-image", {
@@ -32,24 +35,36 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to upload image");
+        const err = await response.json().catch(() => ({ error: "Upload failed" }));
+        throw new Error(err.error || `HTTP ${response.status}`);
       }
 
       const data = await response.json();
-      setRecommendedProducts(data.products || []);
-      setImage(undefined); // Reset input after successful search
+      console.log("Image search result:", data);
 
-    } catch (error) {
-      console.error(error);
-      alert("Upload failed. Please try again.");
-    } finally {
-      setUploading(false);
+      // ── Redirect to products page with highlight params ──
+      // The API returns a redirectUrl shaped identically to the text search:
+      // /products?highlight=<ids>&ai_prompt=<label>&category=<animal>
+      // The products page highlights matched cards with the orange border + Best Match badge.
+      if (data.redirectUrl) {
+        router.push(data.redirectUrl);
+      } else {
+        router.push("/products");
+      }
+
+      // Note: don't reset state or stop the loading spinner here —
+      // the page is navigating away so it doesn't matter.
+
+    } catch (err: any) {
+      console.error("Image search error:", err);
+      setError(err.message || "Something went wrong. Please try again.");
+      setUploading(false); // only reset on error; on success we navigate away
     }
-  }
+  };
 
   return (
     <>
-      {/* Hero Section */}
+      {/* 1. Static Hero Section */}
       <header className="hero-static position-relative">
         <div className="hero-overlay" />
         <div className="container position-relative text-center text-white my-5" style={{ zIndex: 2 }}>
@@ -66,58 +81,73 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Upload & Search Section */}
+      {/* 2. Upload Section */}
       <section className="py-5 bg-white position-relative z-2">
         <div className="container py-4">
           <div className="row justify-content-center">
-            
+
+            {/* Section Title */}
             <div className="col-12 text-center mb-4">
-              <h2 className="fw-bold text-dark display-6 mb-2">Search for Products</h2>
-              <p className="text-muted">Upload an image of what you're craving, and we'll find the best match.</p>
+              <h2 className="fw-bold text-dark display-6 mb-2">Search by Image</h2>
+              <p className="text-muted">
+                Upload a photo of any meat cut and we'll find the closest match in our store
+              </p>
             </div>
 
+            {/* Upload Card */}
             <div className="col-lg-6 col-md-8">
-              <div className="card-upload shadow-sm border rounded overflow-hidden">
-                <div className="card-header-orange bg-orange text-white p-3 fw-bold d-flex align-items-center gap-2">
-                  <i className="bi bi-cloud-arrow-up"></i>
-                  Upload Image
+              <div className="card-upload">
+                {/* Orange Header */}
+                <div className="card-header-orange">
+                  <i className="bi bi-stars me-2"></i>
+                  AI Image Search
                 </div>
 
-                <div className="p-4 bg-light">
-                  <label htmlFor="imageUpload" className="w-100 mb-0" style={{ cursor: "pointer" }}>
-                    <div className="upload-dropzone border border-2 border-dashed rounded p-5 text-center bg-white">
-                      <i className="bi bi-image dropzone-icon d-block fs-1 text-muted mb-2"></i>
-                      <div className="dropzone-text fw-semibold mb-1">
+                <div className="p-4">
+                  {/* Dashed Input Area */}
+                  <label htmlFor="imageUpload" className="w-100 mb-0" style={{ cursor: 'pointer' }}>
+                    <div className="upload-dropzone">
+                      <i className="bi bi-image dropzone-icon d-block"></i>
+                      <div className="dropzone-text">
                         {image ? image.name : "Click to browse or drag and drop"}
                       </div>
-                      <div className="dropzone-subtext text-muted small">
+                      <div className="dropzone-subtext">
                         PNG, JPG, WEBP up to 5MB
                       </div>
                     </div>
                   </label>
-                  
-                  <input 
-                    id="imageUpload" 
-                    type="file" 
-                    className="d-none" 
-                    accept="image/*" 
+
+                  <input
+                    id="imageUpload"
+                    type="file"
+                    className="d-none"
+                    accept="image/*"
                     onChange={handleChange}
                     disabled={uploading}
                   />
 
-                  <button 
-                    className="btn btn-dark w-100 mt-4 py-2 d-flex align-items-center justify-content-center gap-2" 
+                  {/* Error message */}
+                  {error && (
+                    <div className="alert alert-danger py-2 px-3 mt-3 mb-0 small" role="alert">
+                      <i className="bi bi-exclamation-circle me-2"></i>
+                      {error}
+                    </div>
+                  )}
+
+                  {/* Action Button */}
+                  <button
+                    className="btn-upload-action mt-3"
                     onClick={onSubmit}
                     disabled={uploading || !image}
                   >
                     {uploading ? (
                       <>
-                        <span className="spinner-border spinner-border-sm"></span>
-                        Analyzing Image...
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Analysing image...
                       </>
                     ) : (
                       <>
-                        <i className="bi bi-search"></i>
+                        <i className="bi bi-stars me-2"></i>
                         Find Matching Products
                       </>
                     )}
@@ -125,69 +155,64 @@ export default function Home() {
                 </div>
               </div>
             </div>
+
           </div>
-
-          {/* AI Results Section */}
-          {recommendedProducts.length > 0 && (
-            <div className="row mt-5 pt-5 border-top">
-              <div className="col-12 text-center mb-4">
-                <h3 className="fw-bold">We found these matches for you!</h3>
-              </div>
-              <div className="row row-cols-1 row-cols-md-3 g-4 justify-content-center">
-                {recommendedProducts.map((product) => (
-                  <div key={product._id || product.id} className="col">
-                    <div className="card h-100 shadow-sm border-0 transition-transform hover-lift">
-                      <img 
-                        src={product.image || "[https://placehold.co/600x400/222/fff?text=No+Image](https://placehold.co/600x400/222/fff?text=No+Image)"} 
-                        className="card-img-top" 
-                        alt={product.name} 
-                        style={{ height: '200px', objectFit: 'cover' }} 
-                      />
-                      <div className="card-body text-center d-flex flex-column">
-                        <h5 className="fw-bold mb-2">{product.name}</h5>
-                        <div className="mt-auto">
-                          <p className="text-orange fw-bold fs-5 mb-3">R{product.price?.toFixed(2)}</p>
-                          <Link href={`/products/${product.id}`} className="btn btn-outline-dark w-100">
-                            View Product
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
         </div>
       </section>
 
-      {/* Categories Banner */}
+      {/* 3. Browse Categories Banner */}
       <section className="category-banner py-5 bg-dark text-white">
         <div className="container py-4">
           <div className="text-center mb-5">
             <h2 className="display-6 fw-bold">Browse by Category</h2>
-            <div className="divider-custom mx-auto bg-orange" style={{ width: "50px", height: "3px" }}></div>
+            <div className="divider-custom mx-auto bg-orange"></div>
             <p className="text-white-50 mt-3">Explore our premium selection</p>
           </div>
-          
+
           <div className="row g-4 justify-content-center">
-            {[
-              { id: 'beef', name: 'Beef', desc: 'Premium Steaks', color: 'text-danger' },
-              { id: 'chicken', name: 'Chicken', desc: 'Free Range', color: 'text-warning' },
-              { id: 'pork', name: 'Pork', desc: 'Quality Cuts', color: 'text-info' },
-              { id: 'lamb', name: 'Lamb', desc: 'Tender & Juicy', color: 'text-success' }
-            ].map((cat) => (
-              <div key={cat.id} className="col-6 col-md-3">
-                <Link href={`/products?category=${cat.id}`} className="category-card-dark d-block text-decoration-none text-center">
-                  <div className="category-icon-wrapper-dark mb-3 mx-auto rounded-circle d-flex align-items-center justify-content-center bg-secondary bg-opacity-25" style={{ width: "60px", height: "60px" }}>
-                     <i className={`bi bi-circle-fill ${cat.color} fs-3`}></i>
-                  </div>
-                  <h5 className="fw-bold text-white mb-1">{cat.name}</h5>
-                  <p className="text-white-50 small">{cat.desc}</p>
-                </Link>
-              </div>
-            ))}
+            {/* Beef */}
+            <div className="col-6 col-md-3">
+              <Link href="/products?category=beef" className="category-card-dark d-block text-decoration-none text-center">
+                <div className="category-icon-wrapper-dark mb-3 mx-auto rounded-circle d-flex align-items-center justify-content-center">
+                  <i className="bi bi-circle-fill text-danger fs-3"></i>
+                </div>
+                <h5 className="fw-bold text-white mb-1">Beef</h5>
+                <p className="text-white-50 small">Premium Steaks</p>
+              </Link>
+            </div>
+
+            {/* Chicken */}
+            <div className="col-6 col-md-3">
+              <Link href="/products?category=chicken" className="category-card-dark d-block text-decoration-none text-center">
+                <div className="category-icon-wrapper-dark mb-3 mx-auto rounded-circle d-flex align-items-center justify-content-center">
+                  <i className="bi bi-circle-fill text-warning fs-3"></i>
+                </div>
+                <h5 className="fw-bold text-white mb-1">Chicken</h5>
+                <p className="text-white-50 small">Free Range</p>
+              </Link>
+            </div>
+
+            {/* Pork */}
+            <div className="col-6 col-md-3">
+              <Link href="/products?category=pork" className="category-card-dark d-block text-decoration-none text-center">
+                <div className="category-icon-wrapper-dark mb-3 mx-auto rounded-circle d-flex align-items-center justify-content-center">
+                  <i className="bi bi-circle-fill text-info fs-3"></i>
+                </div>
+                <h5 className="fw-bold text-white mb-1">Pork</h5>
+                <p className="text-white-50 small">Quality Cuts</p>
+              </Link>
+            </div>
+
+            {/* Lamb */}
+            <div className="col-6 col-md-3">
+              <Link href="/products?category=lamb" className="category-card-dark d-block text-decoration-none text-center">
+                <div className="category-icon-wrapper-dark mb-3 mx-auto rounded-circle d-flex align-items-center justify-content-center">
+                  <i className="bi bi-circle-fill text-success fs-3"></i>
+                </div>
+                <h5 className="fw-bold text-white mb-1">Lamb</h5>
+                <p className="text-white-50 small">Tender & Juicy</p>
+              </Link>
+            </div>
           </div>
         </div>
       </section>

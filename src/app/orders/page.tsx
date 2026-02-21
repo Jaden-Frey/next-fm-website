@@ -21,10 +21,11 @@ interface Order {
 
 const getStatusBadge = (status: string) => {
   const s = status.toLowerCase();
-  if (s === 'pending')   return { cls: 'bg-warning text-dark', icon: 'bi-clock',        label: 'Pending'   };
-  if (s === 'completed') return { cls: 'bg-success',           icon: 'bi-check-circle', label: 'Completed' };
-  if (s === 'cancelled') return { cls: 'bg-danger',            icon: 'bi-x-circle',     label: 'Cancelled' };
-  return                        { cls: 'bg-secondary',         icon: 'bi-circle',       label: status      };
+  if (s === 'pending')    return { cls: 'bg-warning text-dark', icon: 'bi-clock',        label: 'Pending'    };
+  if (s === 'processing') return { cls: 'bg-info text-dark',    icon: 'bi-gear',          label: 'Processing' };
+  if (s === 'completed')  return { cls: 'bg-success',           icon: 'bi-check-circle',  label: 'Completed'  };
+  if (s === 'cancelled')  return { cls: 'bg-danger',            icon: 'bi-x-circle',      label: 'Cancelled'  };
+  return                         { cls: 'bg-secondary',         icon: 'bi-circle',        label: status       };
 };
 
 export default function OrdersPage() {
@@ -60,7 +61,9 @@ export default function OrdersPage() {
 
   if (loading) return (
     <div className="container min-vh-100 d-flex align-items-center justify-content-center" style={{ paddingTop: '80px' }}>
-      <div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div>
+      <div className="spinner-border text-primary" role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
     </div>
   );
 
@@ -70,7 +73,9 @@ export default function OrdersPage() {
         <i className="bi bi-box-seam text-secondary" style={{ fontSize: '4rem' }}></i>
         <h2 className="mt-4 fw-bold">No orders found</h2>
         <p className="text-muted">You haven't placed any orders yet.</p>
-        <Link href="/products" className="btn btn-dark rounded-pill mt-3 px-4">Start Shopping</Link>
+        <Link href="/products" className="btn btn-dark rounded-pill mt-3 px-4">
+          Start Shopping
+        </Link>
       </div>
     </div>
   );
@@ -85,35 +90,56 @@ export default function OrdersPage() {
             {orders.map(order => {
               const badge = getStatusBadge(order.status);
               const isCancelled = order.status.toLowerCase() === 'cancelled';
+              const isPending   = order.status.toLowerCase() === 'pending';
 
               return (
-                <div key={order._id} className={`card border-0 shadow-sm rounded-4 mb-4 overflow-hidden${isCancelled ? ' opacity-75' : ''}`}>
-
+                <div
+                  key={order._id}
+                  className={`card border-0 shadow-sm rounded-4 mb-4 overflow-hidden${isCancelled ? ' opacity-75' : ''}`}
+                >
+                  {/* Header */}
                   <div className="card-header bg-white border-bottom p-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div className="d-flex flex-column">
-                      <span className="text-muted small fw-bold text-uppercase" style={{ fontSize: '0.7rem' }}>Order Placed</span>
+                      <span className="text-muted small fw-bold text-uppercase" style={{ fontSize: '0.7rem' }}>
+                        Order Placed
+                      </span>
                       <span className="fw-medium">
-                        {new Date(order.createdAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        {new Date(order.createdAt).toLocaleDateString('en-ZA', {
+                          day: 'numeric', month: 'long', year: 'numeric',
+                        })}
                       </span>
                     </div>
 
                     <div className="d-flex align-items-center gap-3">
                       <div className="text-end d-none d-sm-block">
-                        <span className="text-muted small fw-bold text-uppercase d-block" style={{ fontSize: '0.7rem' }}>Order ID</span>
-                        <span className="font-monospace text-dark">#{order._id.slice(-6).toUpperCase()}</span>
+                        <span className="text-muted small fw-bold text-uppercase d-block" style={{ fontSize: '0.7rem' }}>
+                          Order ID
+                        </span>
+                        <span className="font-monospace text-dark">
+                          #{order._id.slice(-6).toUpperCase()}
+                        </span>
                       </div>
+
                       <span className={`badge rounded-pill px-3 py-2 ${badge.cls}`}>
                         <i className={`bi ${badge.icon} me-1`}></i>{badge.label}
                       </span>
                     </div>
                   </div>
 
+                  {/* Items */}
                   <div className="card-body p-0">
                     {order.items.map((item, index) => (
                       <div key={index} className="p-3 border-bottom bg-white">
                         <div className="d-flex align-items-center">
-                          <div className="flex-shrink-0 border rounded overflow-hidden" style={{ width: '60px', height: '60px' }}>
-                            <img src={item.image} alt={item.name} className="w-100 h-100 object-fit-cover" />
+                          <div
+                            className="flex-shrink-0 border rounded overflow-hidden"
+                            style={{ width: '60px', height: '60px' }}
+                          >
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="w-100 h-100 object-fit-cover"
+                            />
                           </div>
                           <div className="flex-grow-1 ms-3">
                             <h6 className="mb-0 fw-bold">{item.name}</h6>
@@ -129,11 +155,25 @@ export default function OrdersPage() {
                     ))}
                   </div>
 
-                  <div className="card-footer p-3 d-flex justify-content-between align-items-center" style={{ background: isCancelled ? '#fff5f5' : undefined }}>
-                    {isCancelled
-                      ? <span className="small text-danger fw-medium"><i className="bi bi-info-circle me-1"></i>This order was cancelled.</span>
-                      : <span className="text-muted fw-medium">Total Amount</span>
-                    }
+                  {/* Footer */}
+                  <div
+                    className="card-footer p-3 d-flex justify-content-between align-items-center"
+                    style={{ background: isCancelled ? '#fff5f5' : undefined }}
+                  >
+                    {isCancelled ? (
+                      <span className="small text-danger fw-medium">
+                        <i className="bi bi-info-circle me-1"></i>
+                        This order was cancelled.
+                      </span>
+                    ) : isPending ? (
+                      <span className="small text-muted fw-medium">
+                        <i className="bi bi-clock me-1"></i>
+                        Awaiting confirmation from the butchery.
+                      </span>
+                    ) : (
+                      <span className="text-muted fw-medium">Total Amount</span>
+                    )}
+
                     <span className={`h5 mb-0 fw-bold${isCancelled ? ' text-muted text-decoration-line-through' : ' text-dark'}`}>
                       R{order.totalAmount.toFixed(2)}
                     </span>
