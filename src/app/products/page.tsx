@@ -50,39 +50,12 @@ function ViewDetailsButton({ href, isAI }: { href: string; isAI: boolean }) {
     transition: "background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease",
   };
 
-  const defaultIdle: React.CSSProperties = {
-    ...base,
-    background: "#ffffff",
-    color: "#1e1e1e",
-    border: "1.5px solid #1e1e1e",
-  };
+  const defaultIdle: React.CSSProperties  = { ...base, background: "#ffffff", color: "#1e1e1e", border: "1.5px solid #1e1e1e" };
+  const defaultHover: React.CSSProperties = { ...base, background: "#1e1e1e", color: "#ffffff", border: "1.5px solid #1e1e1e", boxShadow: "0 4px 14px rgba(0,0,0,0.15)" };
+  const aiIdle: React.CSSProperties       = { ...base, background: "transparent", color: "#1e1e1e", border: "1.5px solid rgba(253,126,20,0.70)" };
+  const aiHover: React.CSSProperties      = { ...base, background: "rgba(253,126,20,0.06)", color: "#1e1e1e", border: "1.5px solid #fd7e14", boxShadow: "0 3px 12px rgba(253,126,20,0.18)" };
 
-  const defaultHover: React.CSSProperties = {
-    ...base,
-    background: "#1e1e1e",
-    color: "#ffffff",
-    border: "1.5px solid #1e1e1e",
-    boxShadow: "0 4px 14px rgba(0,0,0,0.15)",
-  };
-
-  const aiIdle: React.CSSProperties = {
-    ...base,
-    background: "transparent",
-    color: "#1e1e1e",
-    border: "1.5px solid rgba(253,126,20,0.70)",
-  };
-
-  const aiHover: React.CSSProperties = {
-    ...base,
-    background: "rgba(253,126,20,0.06)",
-    color: "#1e1e1e",
-    border: "1.5px solid #fd7e14",
-    boxShadow: "0 3px 12px rgba(253,126,20,0.18)",
-  };
-
-  const style = isAI
-    ? (hovered ? aiHover : aiIdle)
-    : (hovered ? defaultHover : defaultIdle);
+  const style = isAI ? (hovered ? aiHover : aiIdle) : (hovered ? defaultHover : defaultIdle);
 
   return (
     <Link
@@ -94,13 +67,8 @@ function ViewDetailsButton({ href, isAI }: { href: string; isAI: boolean }) {
       View Details
       {isAI && (
         <span style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: "3px",
-          background: "linear-gradient(90deg, #fd7e14, #f0c040)",
-          display: "block",
+          position: "absolute", bottom: 0, left: 0, right: 0, height: "3px",
+          background: "linear-gradient(90deg, #fd7e14, #f0c040)", display: "block",
         }} />
       )}
     </Link>
@@ -120,9 +88,12 @@ function ProductsContent() {
   const searchParams = useSearchParams();
 
   const highlightParam = searchParams.get("highlight");
-  const aiPrompt = searchParams.get("ai_prompt");
+  const aiPrompt       = searchParams.get("ai_prompt");
 
-  const highlightedIds = highlightParam ? highlightParam.split(",").map(id => id.trim()) : [];
+  // ── Normalise highlighted IDs: trim whitespace so URL encoding issues don't break matching ──
+  const highlightedIds = highlightParam
+    ? highlightParam.split(",").map(id => id.trim()).filter(Boolean)
+    : [];
 
   useEffect(() => {
     const categoryFromUrl = searchParams.get("category");
@@ -137,7 +108,7 @@ function ProductsContent() {
       const data = await res.json();
       const normalized = (Array.isArray(data) ? data : []).map((p: any) => ({
         ...p,
-        _id:           p._id,
+        _id:           String(p._id ?? ""),   // always a plain string
         id:            Number(p.id),
         price:         Number(p.price),
         cost:          p.cost != null ? Number(p.cost) : undefined,
@@ -208,18 +179,36 @@ function ProductsContent() {
   const openEditModal = (product: Product, e: React.MouseEvent) => { e.preventDefault(); setEditingProduct(product); setIsModalOpen(true); };
   const onDeleteClick = (product: Product, e: React.MouseEvent) => { e.preventDefault(); if (product._id) handleDelete(product._id); };
 
-  // 1. Filter by Category
-  let displayProducts = selectedCategory === "all"
-    ? [...products]
-    : products.filter((p) => p.category === selectedCategory);
+  // ── Helper: is this product an AI match? ───────────────────────────────────
+  // Check both MongoDB _id (string) and numeric id so either search path works.
+  const isMatch = (product: Product) =>
+    highlightedIds.includes(product._id ?? "") ||
+    highlightedIds.includes(String(product.id));
 
-  // 2. Sort AI matches to the top
+  // ── Build display list ─────────────────────────────────────────────────────
+  // KEY FIX: When AI highlights are present we must NOT filter by category.
+  // The image search redirects with e.g. category=beef, but matched products
+  // (e.g. Beef Patties) might not perfectly align with that filter string.
+  // Skipping the filter guarantees every matched product is actually rendered
+  // so the highlight border and "Best Match" badge can appear on it.
+  let displayProducts: Product[];
+
+  if (highlightedIds.length > 0) {
+    // Show ALL products — matches will be sorted to the top below.
+    displayProducts = [...products];
+  } else {
+    displayProducts = selectedCategory === "all"
+      ? [...products]
+      : products.filter((p) => p.category === selectedCategory);
+  }
+
+  // ── Sort: AI matches first, preserve relative order within each group ──────
   if (highlightedIds.length > 0) {
     displayProducts.sort((a, b) => {
-      const aIsMatch = highlightedIds.includes(String(a._id)) || highlightedIds.includes(String(a.id));
-      const bIsMatch = highlightedIds.includes(String(b._id)) || highlightedIds.includes(String(b.id));
-      if (aIsMatch && !bIsMatch) return -1;
-      if (!aIsMatch && bIsMatch) return 1;
+      const aMatch = isMatch(a);
+      const bMatch = isMatch(b);
+      if (aMatch && !bMatch) return -1;
+      if (!aMatch && bMatch) return 1;
       return 0;
     });
   }
@@ -238,14 +227,11 @@ function ProductsContent() {
       <header className="hero-header position-relative" style={{ overflow: "hidden" }}>
         <div style={{
           backgroundImage: "url('/images/butchery-bg2.png')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          position: "absolute",
-          inset: 0,
+          backgroundSize: "cover", backgroundPosition: "center",
+          position: "absolute", inset: 0,
         }} />
         <div style={{
-          position: "absolute",
-          inset: 0,
+          position: "absolute", inset: 0,
           background: "linear-gradient(to bottom, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.45) 100%)"
         }} />
         <div className="container position-relative text-center text-white hero-content py-5">
@@ -267,17 +253,9 @@ function ProductsContent() {
                     onClick={() => { setSelectedCategory(cat.id); window.history.pushState(null, "", `?category=${cat.id}`); }}
                     className={`filter-pill${isActive ? " filter-pill--active" : ""}`}
                   >
-                    <span
-                      className="pill-dot"
-                      style={{
-                        background: cat.color,
-                        boxShadow: isActive ? `0 0 8px ${cat.color}99` : "none",
-                      }}
-                    />
+                    <span className="pill-dot" style={{ background: cat.color, boxShadow: isActive ? `0 0 8px ${cat.color}99` : "none" }} />
                     <span className="pill-label">{cat.label}</span>
-                    <span className={`pill-badge${isActive ? " pill-badge--active" : ""}`}>
-                      {getCategoryCount(cat.id)}
-                    </span>
+                    <span className={`pill-badge${isActive ? " pill-badge--active" : ""}`}>{getCategoryCount(cat.id)}</span>
                   </button>
                 );
               })}
@@ -335,16 +313,27 @@ function ProductsContent() {
             <div className="alert alert-secondary d-flex align-items-center mb-4 shadow-sm" role="alert">
               <i className="bi bi-info-circle fs-4 me-3"></i>
               <div>
-                <p className="mb-0 text-muted">We couldn't find a perfect match for <strong>"{aiPrompt}"</strong>, but please browse our full selection below!</p>
+                <p className="mb-0 text-muted">
+                  We couldn't find a perfect match for <strong>"{aiPrompt}"</strong>, but please browse our full selection below!
+                </p>
               </div>
             </div>
           )}
 
           <p className="results-count mb-4">
-            Showing <strong>{displayProducts.length}</strong>{" "}
-            {displayProducts.length === 1 ? "product" : "products"}
-            {selectedCategory !== "all" && (
-              <> in <strong style={{ color: activeCat.color === "#ffffff" ? "#222" : activeCat.color }}>{activeCat.label}</strong></>
+            {highlightedIds.length > 0 ? (
+              <>
+                <strong>{highlightedIds.length}</strong> match{highlightedIds.length !== 1 ? "es" : ""} found
+                {" "}· showing all <strong>{displayProducts.length}</strong> products
+              </>
+            ) : (
+              <>
+                Showing <strong>{displayProducts.length}</strong>{" "}
+                {displayProducts.length === 1 ? "product" : "products"}
+                {selectedCategory !== "all" && (
+                  <> in <strong style={{ color: activeCat.color === "#ffffff" ? "#222" : activeCat.color }}>{activeCat.label}</strong></>
+                )}
+              </>
             )}
           </p>
 
@@ -369,7 +358,7 @@ function ProductsContent() {
             )}
 
             {displayProducts.map((product) => {
-              const isAIRecommended = highlightedIds.includes(String(product._id)) || highlightedIds.includes(String(product.id));
+              const isAIRecommended = isMatch(product);
 
               let gpClass = "text-danger";
               let gpStyle: React.CSSProperties = {};
@@ -378,12 +367,8 @@ function ProductsContent() {
               if (product.cost != null && product.price > 0) {
                 const gpDecimal = (product.price - product.cost) / product.price;
                 gpPercent = Math.round(gpDecimal * 100);
-                if (gpDecimal >= 0.50) {
-                  gpClass = "text-success";
-                } else if (gpDecimal >= 0.20) {
-                  gpClass = "";
-                  gpStyle = { color: "#d97706" };
-                }
+                if (gpDecimal >= 0.50)      { gpClass = "text-success"; }
+                else if (gpDecimal >= 0.20) { gpClass = ""; gpStyle = { color: "#d97706" }; }
               }
 
               return (
@@ -394,10 +379,8 @@ function ProductsContent() {
                       <span
                         className="position-absolute top-0 start-50 translate-middle-x badge rounded-bottom fw-bold"
                         style={{
-                          backgroundColor: '#fd7e14',
-                          zIndex: 2,
-                          padding: '6px 16px',
-                          fontSize: '0.85rem',
+                          backgroundColor: '#fd7e14', zIndex: 2,
+                          padding: '6px 16px', fontSize: '0.85rem',
                           boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
                         }}
                       >
@@ -413,7 +396,7 @@ function ProductsContent() {
                           onClick={(e) => openEditModal(product, e)}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" className="bi bi-pencil-fill" viewBox="0 0 16 16">
-                            <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z" />
+                            <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z" />
                           </svg>
                         </button>
                         <button
@@ -481,162 +464,79 @@ function ProductsContent() {
       />
 
       <style jsx>{`
-        /* ── Filter Strip ── */
         .filter-strip-wrapper {
           background: #1e1e1e;
           border-bottom: 1px solid rgba(255,255,255,0.07);
           box-shadow: 0 4px 20px rgba(0,0,0,0.35);
-          top: 0;
-          z-index: 100;
+          top: 0; z-index: 100;
         }
         .filter-strip {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-          padding: 12px 0;
+          display: flex; align-items: center; justify-content: space-between;
+          gap: 12px; padding: 12px 0;
         }
-        .filter-pills {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          flex-wrap: wrap;
-        }
+        .filter-pills { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .filter-pill {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 16px;
-          border-radius: 100px;
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 8px 16px; border-radius: 100px;
           border: 1.5px solid rgba(255,255,255,0.1);
           background: rgba(255,255,255,0.05);
           color: rgba(255,255,255,0.55);
-          font-size: 0.82rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.18s ease;
-          white-space: nowrap;
-          line-height: 1;
+          font-size: 0.82rem; font-weight: 600; cursor: pointer;
+          transition: all 0.18s ease; white-space: nowrap; line-height: 1;
         }
         .filter-pill:hover {
-          border-color: rgba(255,255,255,0.28);
-          color: rgba(255,255,255,0.9);
-          background: rgba(255,255,255,0.09);
-          transform: translateY(-1px);
+          border-color: rgba(255,255,255,0.28); color: rgba(255,255,255,0.9);
+          background: rgba(255,255,255,0.09); transform: translateY(-1px);
         }
         .filter-pill--active {
-          border-color: rgba(255,255,255,0.2);
-          background: rgba(255,255,255,0.12);
-          color: #fff;
-          box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+          border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.12);
+          color: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.3);
         }
-        .filter-pill--active:hover {
-          background: rgba(255,255,255,0.16);
-          color: #fff;
-          transform: translateY(-1px);
-        }
+        .filter-pill--active:hover { background: rgba(255,255,255,0.16); color: #fff; transform: translateY(-1px); }
         .pill-dot {
-          display: inline-block;
-          width: 9px;
-          height: 9px;
-          border-radius: 50%;
-          flex-shrink: 0;
-          transition: box-shadow 0.18s ease;
+          display: inline-block; width: 9px; height: 9px;
+          border-radius: 50%; flex-shrink: 0; transition: box-shadow 0.18s ease;
         }
-        .pill-label {
-          font-weight: 600;
-          letter-spacing: 0.01em;
-        }
+        .pill-label { font-weight: 600; letter-spacing: 0.01em; }
         .pill-badge {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          min-width: 20px;
-          height: 20px;
-          padding: 0 5px;
-          border-radius: 100px;
-          font-size: 0.63rem;
-          font-weight: 700;
-          background: rgba(255,255,255,0.08);
-          color: rgba(255,255,255,0.4);
+          display: inline-flex; align-items: center; justify-content: center;
+          min-width: 20px; height: 20px; padding: 0 5px; border-radius: 100px;
+          font-size: 0.63rem; font-weight: 700;
+          background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.4);
           transition: background 0.18s, color 0.18s;
         }
-        .pill-badge--active {
-          background: rgba(255,255,255,0.15);
-          color: rgba(255,255,255,0.85);
-        }
+        .pill-badge--active { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.85); }
         .delete-cat-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 0.68rem;
-          font-weight: 600;
-          letter-spacing: 0.05em;
-          text-transform: uppercase;
-          color: rgba(255,255,255,0.3);
-          background: none;
-          border: 1.5px solid rgba(255,255,255,0.1);
-          border-radius: 8px;
-          padding: 7px 13px;
-          cursor: pointer;
-          transition: all 0.18s ease;
-          white-space: nowrap;
-          flex-shrink: 0;
+          display: inline-flex; align-items: center; gap: 6px;
+          font-size: 0.68rem; font-weight: 600; letter-spacing: 0.05em;
+          text-transform: uppercase; color: rgba(255,255,255,0.3);
+          background: none; border: 1.5px solid rgba(255,255,255,0.1);
+          border-radius: 8px; padding: 7px 13px; cursor: pointer;
+          transition: all 0.18s ease; white-space: nowrap; flex-shrink: 0;
         }
-        .delete-cat-btn:hover:not(:disabled) {
-          color: #e05252;
-          border-color: rgba(224,82,82,0.5);
-          background: rgba(224,82,82,0.08);
-        }
-        .delete-cat-btn:disabled {
-          opacity: 0.25;
-          cursor: not-allowed;
-        }
-        .results-count {
-          font-size: 0.84rem;
-          color: #999;
-        }
+        .delete-cat-btn:hover:not(:disabled) { color: #e05252; border-color: rgba(224,82,82,0.5); background: rgba(224,82,82,0.08); }
+        .delete-cat-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+        .results-count { font-size: 0.84rem; color: #999; }
         .results-count strong { color: #222; }
-        .hover-lift {
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .hover-lift:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 28px rgba(0,0,0,0.1) !important;
-        }
-        .hover-shadow:hover {
-          box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important;
-        }
-
-        /* ── AI Highlight Card ── */
+        .hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,0.1) !important; }
+        .hover-shadow:hover { box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important; }
         .ai-highlight-card {
-          border: 2.5px solid rgba(253, 126, 20, 0.80) !important;
-          box-shadow:
-            0 0 0 4px rgba(253, 126, 20, 0.10),
-            0 8px 24px rgba(0, 0, 0, 0.10) !important;
-          animation: popIn 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+          border: 2.5px solid rgba(253,126,20,0.80) !important;
+          box-shadow: 0 0 0 4px rgba(253,126,20,0.10), 0 8px 24px rgba(0,0,0,0.10) !important;
+          animation: popIn 0.45s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
         }
-
         @keyframes popIn {
           0%   { transform: scale(0.96); opacity: 0.6; }
           100% { transform: scale(1);    opacity: 1;   }
         }
-
-        /* ── Clear Search button (theme-matching) ── */
         .ai-clear-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 9px 14px;
-          border-radius: 10px;
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 9px 14px; border-radius: 10px;
           background: linear-gradient(180deg, rgba(253,126,20,0.06), rgba(240,192,64,0.02));
-          border: 1px solid rgba(253,126,20,0.20);
-          color: #fd7e14;
-          font-weight: 700;
-          font-size: 0.75rem;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          cursor: pointer;
+          border: 1px solid rgba(253,126,20,0.20); color: #fd7e14;
+          font-weight: 700; font-size: 0.75rem; letter-spacing: 0.06em;
+          text-transform: uppercase; cursor: pointer;
           transition: transform 0.12s ease, box-shadow 0.18s ease, background 0.18s ease, color 0.12s ease;
           white-space: nowrap;
         }
@@ -644,16 +544,11 @@ function ProductsContent() {
         .ai-clear-btn:hover {
           transform: translateY(-2px);
           background: linear-gradient(90deg, rgba(253,126,20,0.12), rgba(240,192,64,0.05));
-          color: #000000;
-          border-color: rgba(253,126,20,0.95);
+          color: #000000; border-color: rgba(253,126,20,0.95);
           box-shadow: 0 8px 26px rgba(253,126,20,0.12);
         }
-        .ai-clear-btn:focus-visible {
-          outline: 3px solid rgba(253,126,20,0.18);
-          outline-offset: 2px;
-        }
+        .ai-clear-btn:focus-visible { outline: 3px solid rgba(253,126,20,0.18); outline-offset: 2px; }
         .ai-clear-btn span { line-height: 1; }
-
       `}</style>
     </>
   );

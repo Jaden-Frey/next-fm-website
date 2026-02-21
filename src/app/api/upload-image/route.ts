@@ -5,8 +5,6 @@ import { Image } from '../../../lib/models/image.model';
 import Product from '../../../lib/models/product';
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.FM_API_KEY });
-
 export async function POST(request: Request) {
     try {
         await connect();
@@ -17,6 +15,12 @@ export async function POST(request: Request) {
         if (!image) {
             return NextResponse.json({ error: "No image provided" }, { status: 400 });
         }
+
+        const apiKey = process.env.FM_API_KEY;
+        if (!apiKey) {
+            return NextResponse.json({ error: "Search is not configured." }, { status: 503 });
+        }
+        const ai = new GoogleGenAI({ apiKey });
 
         // 1. Upload to Cloudinary
         const uploadResult = await UploadImage(image, "image-upload") as any;
@@ -41,9 +45,8 @@ export async function POST(request: Request) {
         const allProducts = await Product.find({})
             .select('_id id name description category price onSale')
             .lean();
-
         const catalogLines = allProducts.map((p: any) =>
-            `ID:${p._id} | Name: ${p.name} | Category: ${p.category} | Description: ${p.description ?? ''}`
+            `PRODUCT_ID:${p.id} | Name: ${p.name} | Category: ${p.category} | Description: ${p.description ?? ''}`
         ).join('\n');
 
         // 5. Analyse image AND match directly against catalog
@@ -65,6 +68,7 @@ Matching rules:
 - Match on visual similarity: if the image shows pork chops, match all pork chop products.
 - Match on cut family: if the image shows a rack of ribs, match ribs regardless of animal if visually consistent.
 - If the exact cut isn't in the catalog, match the closest equivalent (e.g. Tomahawk → Ribeye Steak).
+- If the image shows a hamburger or burger, match burger patties and beef mince products.
 - Be precise — only include products that are a GENUINE visual match. Do not pad results.
 - If the image is ambiguous or low quality, match the closest plausible products.
 - If nothing matches, return an empty matchedIds array.
@@ -75,7 +79,7 @@ Return ONLY a valid JSON object in this exact format, with NO markdown or extra 
   "visualAnalysis": "brief description of what you see in the image",
   "detectedAnimal": "beef|pork|chicken|lamb|unknown",
   "detectedCut": "name of the cut or 'unknown'",
-  "matchedIds": ["<_id1>", "<_id2>"],
+  "matchedIds": [<PRODUCT_ID as number>, <PRODUCT_ID as number>],
   "reasoning": "why these products were matched"
 }
         `;
@@ -104,7 +108,7 @@ Return ONLY a valid JSON object in this exact format, with NO markdown or extra 
             visualAnalysis?: string;
             detectedAnimal?: string;
             detectedCut?: string;
-            matchedIds?: string[];
+            matchedIds?: (string | number)[];
             reasoning?: string;
         } = {};
 
@@ -119,22 +123,23 @@ Return ONLY a valid JSON object in this exact format, with NO markdown or extra 
             aiResult = { matchedIds: [], reasoning: "Parse error" };
         }
 
-        const matchedIds = Array.isArray(aiResult.matchedIds) ? aiResult.matchedIds : [];
+        // Normalise matchedIds to plain strings so URL encoding is clean
+        const rawMatchedIds = Array.isArray(aiResult.matchedIds) ? aiResult.matchedIds : [];
+        const matchedNumericIds: string[] = rawMatchedIds
+            .map(id => String(id).trim())
+            .filter(Boolean);
 
-        // 7. Preserve AI ranking order
-        const matchedProducts = allProducts.filter((p: any) =>
-            matchedIds.includes(String(p._id))
-        );
-        const orderedProducts = matchedIds
-            .map(id => matchedProducts.find((p: any) => String(p._id) === id))
+        // 7. Look up matched products using numeric id 
+        const matchedProducts = matchedNumericIds
+            .map(numId => allProducts.find((p: any) => String(p.id) === numId))
             .filter(Boolean);
 
         console.log(
             `[Image Search] Detected: ${aiResult.detectedAnimal} / ${aiResult.detectedCut}`,
-            `→ ${matchedIds.length} matches. Reason: ${aiResult.reasoning}`
+            `→ ${matchedNumericIds.length} matches. Reason: ${aiResult.reasoning}`
         );
 
-        // 8. Build redirect URL 
+        // 8. Build redirect URL using numeric ids 
         const promptLabel = (
             aiResult.detectedCut && aiResult.detectedCut !== 'unknown'
                 ? `${aiResult.detectedAnimal} – ${aiResult.detectedCut}`
@@ -148,8 +153,8 @@ Return ONLY a valid JSON object in this exact format, with NO markdown or extra 
                 ? aiResult.detectedAnimal
                 : 'all';
 
-        const redirectUrl = matchedIds.length > 0
-            ? `/products?highlight=${matchedIds.join(',')}&ai_prompt=${encodeURIComponent(promptLabel)}&category=${categoryParam}`
+        const redirectUrl = matchedNumericIds.length > 0
+            ? `/products?highlight=${matchedNumericIds.join(',')}&ai_prompt=${encodeURIComponent(promptLabel)}&category=${categoryParam}`
             : `/products?nomatch=1&ai_prompt=${encodeURIComponent(promptLabel)}`;
 
         return NextResponse.json({
@@ -162,9 +167,9 @@ Return ONLY a valid JSON object in this exact format, with NO markdown or extra 
                 detectedCut:    aiResult.detectedCut,
                 reasoning:      aiResult.reasoning,
             },
-            matchedIds,
-            products:    orderedProducts,
-            redirectUrl, 
+            matchedIds: matchedNumericIds,
+            products:   matchedProducts,
+            redirectUrl,
         }, { status: 200 });
 
     } catch (error) {
